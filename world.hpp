@@ -13,7 +13,8 @@ const int CHUNK_RESOLUTION = 32;
 const int VIEW_DISTANCE = 4;
 
 const float WORLD_SCALE = 3.0f;
-const int GRASS_PER_CHUNK = 28000;
+const int GRASS_PER_CHUNK = 9000;
+const int FLOWERS_PER_CHUNK = 220;
 
 const float WATER_LEVEL = -2.0f;
 
@@ -38,13 +39,25 @@ struct Rock {
     float size;
 };
 
+struct Flower {
+    Vector3 position;
+    float size;
+    Color color;
+    float sway;
+};
+
 struct Chunk {
     ChunkKey key;
+
     Mesh terrainMesh;
     Model terrainModel;
 
     Mesh grassMesh;
     Model grassModel;
+
+    Mesh flowerMesh;
+    Model flowerModel;
+    bool hasFlowerMesh = false;
 
     std::vector<Tree> trees;
     std::vector<Rock> rocks;
@@ -151,8 +164,6 @@ inline float GetTerrainHeight(float x, float z) {
     float height = base * 20.0f;
     height += detail * 3.2f;
     height += powf(fmaxf(mountains, 0.0f), 2.3f) * 55.0f;
-
-    // Controlled realism: adds sharper mountain ridges without breaking grass generation.
     height += ridges * 10.0f;
 
     height += sinf(x * 0.018f) * 2.0f;
@@ -166,9 +177,7 @@ inline Color GetTerrainColor(float h, float x, float z) {
     float dirt = FractalNoise(x - 500, z + 700, 3, 0.04f, 0.52f);
     float stone = FractalNoise(x + 1400, z + 1200, 3, 0.025f, 0.5f);
 
-    if (h < WATER_LEVEL + 0.4f) {
-        return Color{55, 105, 75, 255};
-    }
+    if (h < WATER_LEVEL + 0.4f) return Color{55, 105, 75, 255};
 
     if (h < 5.0f) {
         if (patch > 0.28f) return Color{78, 145, 72, 255};
@@ -206,6 +215,41 @@ inline Color RandomGrassColor() {
     };
 }
 
+inline Color RandomFlowerColor() {
+    int type = GetRandomValue(0, 5);
+
+    if (type == 0) return Color{255, 235, 90, 255};
+    if (type == 1) return Color{255, 125, 185, 255};
+    if (type == 2) return Color{180, 130, 255, 255};
+    if (type == 3) return Color{255, 255, 255, 255};
+    if (type == 4) return Color{255, 165, 75, 255};
+    return Color{120, 190, 255, 255};
+}
+
+inline void WriteVertex(
+    Mesh& mesh,
+    int vertexIndex,
+    Vector3 p,
+    Vector3 n,
+    Color c
+) {
+    mesh.vertices[vertexIndex * 3 + 0] = p.x;
+    mesh.vertices[vertexIndex * 3 + 1] = p.y;
+    mesh.vertices[vertexIndex * 3 + 2] = p.z;
+
+    mesh.normals[vertexIndex * 3 + 0] = n.x;
+    mesh.normals[vertexIndex * 3 + 1] = n.y;
+    mesh.normals[vertexIndex * 3 + 2] = n.z;
+
+    mesh.texcoords[vertexIndex * 2 + 0] = 0.0f;
+    mesh.texcoords[vertexIndex * 2 + 1] = 0.0f;
+
+    mesh.colors[vertexIndex * 4 + 0] = c.r;
+    mesh.colors[vertexIndex * 4 + 1] = c.g;
+    mesh.colors[vertexIndex * 4 + 2] = c.b;
+    mesh.colors[vertexIndex * 4 + 3] = c.a;
+}
+
 inline Mesh GenerateGrassMesh(float startX, float startZ, float chunkWorldSize) {
     const int bladeCount = GRASS_PER_CHUNK;
     const int vertexCount = bladeCount * 4;
@@ -235,9 +279,7 @@ inline Mesh GenerateGrassMesh(float startX, float startZ, float chunkWorldSize) 
         float gzWorld = startZ + GetRandomValue(0, 10000) / 10000.0f * chunkWorldSize;
         float gy = GetTerrainHeight(gxWorld, gzWorld);
 
-        if (gy < WATER_LEVEL + 0.2f || gy > 18.0f) {
-            continue;
-        }
+        if (gy < WATER_LEVEL + 0.2f || gy > 18.0f) continue;
 
         float h = 0.12f + GetRandomValue(0, 1000) / 1000.0f * 0.38f;
         float w = 0.12f + GetRandomValue(0, 1000) / 1000.0f * 0.18f;
@@ -260,25 +302,13 @@ inline Mesh GenerateGrassMesh(float startX, float startZ, float chunkWorldSize) 
         Vector3 p2 = {localX - rx * 0.35f, gy + h, localZ - rz * 0.35f};
         Vector3 p3 = {localX + rx * 0.35f, gy + h, localZ + rz * 0.35f};
 
-        Vector3 points[4] = {p0, p1, p2, p3};
+        Color baseColor = Color{c.r, c.g, c.b, 0};
+        Color tipColor = Color{c.r, c.g, c.b, 255};
 
-        for (int k = 0; k < 4; k++) {
-            mesh.vertices[(v + k) * 3 + 0] = points[k].x;
-            mesh.vertices[(v + k) * 3 + 1] = points[k].y;
-            mesh.vertices[(v + k) * 3 + 2] = points[k].z;
-
-            mesh.normals[(v + k) * 3 + 0] = 0;
-            mesh.normals[(v + k) * 3 + 1] = 1;
-            mesh.normals[(v + k) * 3 + 2] = 0;
-
-            mesh.texcoords[(v + k) * 2 + 0] = 0;
-            mesh.texcoords[(v + k) * 2 + 1] = 0;
-
-            mesh.colors[(v + k) * 4 + 0] = c.r;
-            mesh.colors[(v + k) * 4 + 1] = c.g;
-            mesh.colors[(v + k) * 4 + 2] = c.b;
-            mesh.colors[(v + k) * 4 + 3] = (k < 2) ? 0 : 255;
-        }
+        WriteVertex(mesh, v + 0, p0, {0, 1, 0}, baseColor);
+        WriteVertex(mesh, v + 1, p1, {0, 1, 0}, baseColor);
+        WriteVertex(mesh, v + 2, p2, {0, 1, 0}, tipColor);
+        WriteVertex(mesh, v + 3, p3, {0, 1, 0}, tipColor);
 
         mesh.indices[idx++] = v + 0;
         mesh.indices[idx++] = v + 1;
@@ -289,6 +319,108 @@ inline Mesh GenerateGrassMesh(float startX, float startZ, float chunkWorldSize) 
         mesh.indices[idx++] = v + 3;
 
         v += 4;
+        generated++;
+    }
+
+    mesh.vertexCount = v;
+    mesh.triangleCount = idx / 3;
+
+    UploadMesh(&mesh, false);
+    return mesh;
+}
+
+inline Mesh GenerateFlowerMesh(float startX, float startZ, float chunkWorldSize) {
+    // CPU optimization:
+    // Instead of hundreds of DrawSphere/DrawCylinder calls per frame,
+    // all flowers become one GPU mesh per chunk.
+    const int maxFlowers = FLOWERS_PER_CHUNK;
+    const int verticesPerFlower = 8;
+    const int trianglesPerFlower = 4;
+
+    Mesh mesh = {0};
+    mesh.vertexCount = maxFlowers * verticesPerFlower;
+    mesh.triangleCount = maxFlowers * trianglesPerFlower;
+
+    mesh.vertices = (float*)MemAlloc(mesh.vertexCount * 3 * sizeof(float));
+    mesh.normals = (float*)MemAlloc(mesh.vertexCount * 3 * sizeof(float));
+    mesh.texcoords = (float*)MemAlloc(mesh.vertexCount * 2 * sizeof(float));
+    mesh.colors = (unsigned char*)MemAlloc(mesh.vertexCount * 4 * sizeof(unsigned char));
+    mesh.indices = (unsigned short*)MemAlloc(mesh.triangleCount * 3 * sizeof(unsigned short));
+
+    int v = 0;
+    int idx = 0;
+    int generated = 0;
+    int attempts = 0;
+    int maxAttempts = maxFlowers * 5;
+
+    while (generated < maxFlowers && attempts < maxAttempts) {
+        attempts++;
+
+        float fx = startX + GetRandomValue(0, 10000) / 10000.0f * chunkWorldSize;
+        float fz = startZ + GetRandomValue(0, 10000) / 10000.0f * chunkWorldSize;
+        float fy = GetTerrainHeight(fx, fz);
+
+        float flowerZone = FractalNoise(fx + 2500, fz - 1800, 3, 0.035f, 0.5f);
+
+        bool meadowHeight = fy > WATER_LEVEL + 0.45f && fy < 11.5f;
+        bool flowerPatch = flowerZone > -0.10f;
+        bool randomDensity = GetRandomValue(0, 100) > 32;
+
+        if (!meadowHeight || !flowerPatch || !randomDensity) continue;
+
+        float localX = fx - startX;
+        float localZ = fz - startZ;
+
+        float size = 0.55f + GetRandomValue(0, 1000) / 1000.0f * 0.75f;
+        float stemHeight = 0.30f * size;
+        float blossomHeight = 0.48f * size;
+        float halfStem = 0.018f * size;
+        float halfPetal = 0.13f * size;
+
+        Color stemColor = Color{45, 150, 55, 255};
+        Color flowerColor = RandomFlowerColor();
+
+        // Quad 1: green stem.
+        Vector3 s0 = {localX - halfStem, fy + 0.04f, localZ};
+        Vector3 s1 = {localX + halfStem, fy + 0.04f, localZ};
+        Vector3 s2 = {localX - halfStem, fy + stemHeight, localZ};
+        Vector3 s3 = {localX + halfStem, fy + stemHeight, localZ};
+
+        // Quad 2: colored flower head, billboard-like crossed petal card.
+        Vector3 p0 = {localX - halfPetal, fy + blossomHeight, localZ};
+        Vector3 p1 = {localX + halfPetal, fy + blossomHeight, localZ};
+        Vector3 p2 = {localX - halfPetal * 0.55f, fy + blossomHeight + halfPetal, localZ};
+        Vector3 p3 = {localX + halfPetal * 0.55f, fy + blossomHeight + halfPetal, localZ};
+
+        WriteVertex(mesh, v + 0, s0, {0, 1, 0}, stemColor);
+        WriteVertex(mesh, v + 1, s1, {0, 1, 0}, stemColor);
+        WriteVertex(mesh, v + 2, s2, {0, 1, 0}, stemColor);
+        WriteVertex(mesh, v + 3, s3, {0, 1, 0}, stemColor);
+
+        WriteVertex(mesh, v + 4, p0, {0, 1, 0}, flowerColor);
+        WriteVertex(mesh, v + 5, p1, {0, 1, 0}, flowerColor);
+        WriteVertex(mesh, v + 6, p2, {0, 1, 0}, flowerColor);
+        WriteVertex(mesh, v + 7, p3, {0, 1, 0}, flowerColor);
+
+        // Stem quad.
+        mesh.indices[idx++] = v + 0;
+        mesh.indices[idx++] = v + 1;
+        mesh.indices[idx++] = v + 2;
+
+        mesh.indices[idx++] = v + 2;
+        mesh.indices[idx++] = v + 1;
+        mesh.indices[idx++] = v + 3;
+
+        // Flower quad.
+        mesh.indices[idx++] = v + 4;
+        mesh.indices[idx++] = v + 5;
+        mesh.indices[idx++] = v + 6;
+
+        mesh.indices[idx++] = v + 6;
+        mesh.indices[idx++] = v + 5;
+        mesh.indices[idx++] = v + 7;
+
+        v += verticesPerFlower;
         generated++;
     }
 
@@ -383,6 +515,13 @@ inline Chunk GenerateChunk(int cx, int cz, Shader grassShader) {
     chunk.grassModel.transform = MatrixTranslate(startX, 0, startZ);
     chunk.grassModel.materials[0].shader = grassShader;
 
+    chunk.flowerMesh = GenerateFlowerMesh(startX, startZ, chunkWorldSize);
+    chunk.hasFlowerMesh = chunk.flowerMesh.vertexCount > 0;
+    if (chunk.hasFlowerMesh) {
+        chunk.flowerModel = LoadModelFromMesh(chunk.flowerMesh);
+        chunk.flowerModel.transform = MatrixTranslate(startX, 0, startZ);
+    }
+
     for (int i = 0; i < 70; i++) {
         float tx = startX + GetRandomValue(0, 10000) / 10000.0f * chunkWorldSize;
         float tz = startZ + GetRandomValue(0, 10000) / 10000.0f * chunkWorldSize;
@@ -432,7 +571,7 @@ inline void DrawNature(const std::map<ChunkKey, Chunk>& chunks, Vector3 playerPo
         const Chunk& c = item.second;
 
         for (const Tree& t : c.trees) {
-            if (Vector3Distance(playerPos, t.position) > 150.0f) continue;
+            if (Vector3Distance(playerPos, t.position) > 120.0f) continue;
 
             float wind = sinf(time * 1.8f + t.sway) * 0.28f * t.size;
 
@@ -457,7 +596,7 @@ inline void DrawNature(const std::map<ChunkKey, Chunk>& chunks, Vector3 playerPo
         }
 
         for (const Rock& r : c.rocks) {
-            if (Vector3Distance(playerPos, r.position) > 130.0f) continue;
+            if (Vector3Distance(playerPos, r.position) > 90.0f) continue;
 
             float shape = sinf(r.position.x * 0.12f + r.position.z * 0.08f) * 0.18f;
 
@@ -481,6 +620,44 @@ inline void DrawNature(const std::map<ChunkKey, Chunk>& chunks, Vector3 playerPo
                 Color{82, 82, 78, 255}
             );
         }
+    }
+}
+
+inline void DrawFlowerModels(const std::map<ChunkKey, Chunk>& chunks, Vector3 playerPos) {
+    for (const auto& item : chunks) {
+        const Chunk& c = item.second;
+
+        if (!c.hasFlowerMesh) continue;
+
+        float chunkWorldSize = CHUNK_SIZE * WORLD_SCALE;
+        float chunkCenterX = c.key.x * chunkWorldSize + chunkWorldSize * 0.5f;
+        float chunkCenterZ = c.key.z * chunkWorldSize + chunkWorldSize * 0.5f;
+
+        float dist = Vector2Distance({playerPos.x, playerPos.z}, {chunkCenterX, chunkCenterZ});
+
+        if (dist < 120.0f) {
+            DrawModel(c.flowerModel, {0, 0, 0}, 1.0f, WHITE);
+        }
+    }
+}
+
+inline void DrawClouds(float time, Vector3 playerPos) {
+    for (int i = 0; i < 32; i++) {
+        float x = playerPos.x + sinf(i * 91.7f) * 520.0f;
+        float z = playerPos.z + cosf(i * 71.3f) * 520.0f;
+
+        x += sinf(time * 0.015f + i) * 90.0f;
+
+        float y = 95.0f + sinf(i * 0.7f) * 15.0f;
+        float s = 10.0f + (i % 5) * 4.0f;
+
+        Color c = Fade(WHITE, 0.78f);
+        Vector3 p = {x, y, z};
+
+        DrawSphere(p, s, c);
+        DrawSphere({p.x + s * 0.7f, p.y + 2.0f, p.z}, s * 0.8f, c);
+        DrawSphere({p.x - s * 0.7f, p.y + 1.0f, p.z}, s * 0.75f, c);
+        DrawSphere({p.x, p.y + 3.0f, p.z + s * 0.4f}, s * 0.7f, c);
     }
 }
 

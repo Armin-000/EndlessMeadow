@@ -80,6 +80,10 @@ inline void UnloadChunks(std::map<ChunkKey, Chunk>& chunks) {
     for (auto& item : chunks) {
         UnloadModel(item.second.terrainModel);
         UnloadModel(item.second.grassModel);
+
+        if (item.second.hasFlowerMesh) {
+            UnloadModel(item.second.flowerModel);
+        }
     }
 
     chunks.clear();
@@ -285,6 +289,11 @@ inline void RunGame() {
         for (const ChunkKey& key : remove) {
             UnloadModel(chunks[key].terrainModel);
             UnloadModel(chunks[key].grassModel);
+
+            if (chunks[key].hasFlowerMesh) {
+                UnloadModel(chunks[key].flowerModel);
+            }
+
             chunks.erase(key);
         }
 
@@ -311,14 +320,23 @@ inline void RunGame() {
         }
 
         BeginDrawing();
-        ClearBackground(Color{155, 205, 255, 255});
+        ClearBackground(Color{95, 170, 255, 255});
 
         BeginMode3D(camera);
+        DrawClouds(time, playerPos);
 
-        Vector3 sunPos = {260, 170, 130};
-        DrawSphere(sunPos, 26.0f, Color{255, 245, 170, 255});
-        DrawSphere(sunPos, 38.0f, Fade(Color{255, 220, 90, 255}, 0.18f));
-        DrawSphere(sunPos, 58.0f, Fade(Color{255, 200, 80, 255}, 0.08f));
+        float sunTime = GetTime() * 0.03f;
+
+        Vector3 sunPos = {
+            cosf(sunTime) * 420.0f,
+            180.0f + sinf(sunTime) * 90.0f,
+            140.0f
+        };
+
+        DrawSphere(sunPos, 34.0f, Color{255, 245, 200, 255});
+        DrawSphere(sunPos, 55.0f, Fade(Color{255, 220, 120, 255}, 0.22f));
+        DrawSphere(sunPos, 85.0f, Fade(Color{255, 190, 90, 255}, 0.12f));
+        DrawSphere(sunPos, 130.0f, Fade(Color{255, 160, 70, 255}, 0.05f));
 
         for (const auto& item : chunks) {
             const Chunk& c = item.second;
@@ -329,12 +347,15 @@ inline void RunGame() {
 
             DrawModel(c.terrainModel, {0, 0, 0}, 1.0f, WHITE);
 
-            if (dist < 260.0f) {
+            if (dist < 145.0f) {
                 DrawModel(c.grassModel, {0, 0, 0}, 1.0f, WHITE);
             }
         }
 
         DrawWaterAroundPlayer(playerPos, time);
+
+        // GPU flower rendering
+        DrawFlowerModels(chunks, playerPos);
 
         DrawNature(chunks, playerPos, time);
         DrawCuteAlien(playerPos, playerYaw, isMoving, time);
