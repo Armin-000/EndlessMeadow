@@ -14,6 +14,10 @@
   <img src="https://img.shields.io/badge/OpenGL-Renderer-orange">
 </p>
 
+<p align="center">
+  <img src="./assets/preload.png" width="100%" alt="Endless Meadow Preload">
+</p>
+
 ---
 
 ![Endless Meadow](./assets/meadoww.png)
