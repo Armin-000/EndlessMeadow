@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="./assets/preload.png" width="100%" alt="Endless Meadow Preload">
+  <img src="./assets/wallpaper.png" width="100%" alt="Endless Meadow Preload">
 </p>
 
 ---
