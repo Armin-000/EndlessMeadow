@@ -16,7 +16,7 @@
 
 ---
 
-![Endless Meadow](./meadow.png)
+![Endless Meadow](./meadoww.png)
 
 
 A cinematic procedural meadow prototype built in **modern C++**, powered by **raylib**, procedural terrain generation and GPU-animated grass rendering.
