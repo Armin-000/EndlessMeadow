@@ -173,35 +173,36 @@ inline float GetTerrainHeight(float x, float z) {
 }
 
 inline Color GetTerrainColor(float h, float x, float z) {
-    float patch = FractalNoise(x + 900, z - 400, 3, 0.055f, 0.5f);
-    float dirt = FractalNoise(x - 500, z + 700, 3, 0.04f, 0.52f);
-    float stone = FractalNoise(x + 1400, z + 1200, 3, 0.025f, 0.5f);
+    float patch = FractalNoise(x + 900, z - 400, 3, 0.045f, 0.5f);
+    float dirt = FractalNoise(x - 500, z + 700, 3, 0.035f, 0.52f);
+    float stone = FractalNoise(x + 1400, z + 1200, 3, 0.022f, 0.5f);
+    float cold = FractalNoise(x - 2200, z + 1700, 2, 0.012f, 0.55f);
 
-    if (h < WATER_LEVEL + 0.4f) return Color{55, 105, 75, 255};
+    if (h < WATER_LEVEL + 0.4f) return Color{42, 86, 70, 255};
 
     if (h < 5.0f) {
-        if (patch > 0.28f) return Color{78, 145, 72, 255};
-        if (dirt > 0.34f) return Color{92, 130, 68, 255};
-        return Color{65, 165, 85, 255};
+        if (patch > 0.28f) return Color{72, 118, 67, 255};
+        if (dirt > 0.30f) return Color{95, 92, 66, 255};
+        return Color{58, 125, 70, 255};
     }
 
     if (h < 14.0f) {
-        if (patch > 0.24f) return Color{105, 125, 72, 255};
-        if (dirt > 0.32f) return Color{112, 103, 74, 255};
-        return Color{92, 150, 72, 255};
+        if (patch > 0.22f) return Color{91, 108, 68, 255};
+        if (dirt > 0.28f) return Color{105, 94, 70, 255};
+        return Color{74, 118, 67, 255};
     }
 
     if (h < 25.0f) {
-        if (stone > 0.18f) return Color{132, 126, 118, 255};
-        return Color{120, 112, 95, 255};
+        if (stone > 0.12f) return Color{112, 108, 98, 255};
+        return Color{95, 92, 78, 255};
     }
 
     if (h < 42.0f) {
-        if (stone > 0.12f) return Color{145, 145, 140, 255};
-        return Color{125, 118, 105, 255};
+        if (cold > 0.0f) return Color{142, 148, 150, 255};
+        return Color{118, 116, 108, 255};
     }
 
-    return Color{205, 210, 215, 255};
+    return Color{205, 210, 212, 255};
 }
 
 inline Color RandomGrassColor() {
@@ -431,6 +432,66 @@ inline Mesh GenerateFlowerMesh(float startX, float startZ, float chunkWorldSize)
     return mesh;
 }
 
+inline void RecalculateTerrainNormals(Mesh& mesh, int verticesPerSide) {
+    for (int i = 0; i < mesh.vertexCount * 3; i++) {
+        mesh.normals[i] = 0.0f;
+    }
+
+    for (int i = 0; i < mesh.triangleCount * 3; i += 3) {
+        int i0 = mesh.indices[i + 0];
+        int i1 = mesh.indices[i + 1];
+        int i2 = mesh.indices[i + 2];
+
+        Vector3 v0 = {
+            mesh.vertices[i0 * 3 + 0],
+            mesh.vertices[i0 * 3 + 1],
+            mesh.vertices[i0 * 3 + 2]
+        };
+
+        Vector3 v1 = {
+            mesh.vertices[i1 * 3 + 0],
+            mesh.vertices[i1 * 3 + 1],
+            mesh.vertices[i1 * 3 + 2]
+        };
+
+        Vector3 v2 = {
+            mesh.vertices[i2 * 3 + 0],
+            mesh.vertices[i2 * 3 + 1],
+            mesh.vertices[i2 * 3 + 2]
+        };
+
+        Vector3 edge1 = Vector3Subtract(v1, v0);
+        Vector3 edge2 = Vector3Subtract(v2, v0);
+        Vector3 normal = Vector3Normalize(Vector3CrossProduct(edge1, edge2));
+
+        mesh.normals[i0 * 3 + 0] += normal.x;
+        mesh.normals[i0 * 3 + 1] += normal.y;
+        mesh.normals[i0 * 3 + 2] += normal.z;
+
+        mesh.normals[i1 * 3 + 0] += normal.x;
+        mesh.normals[i1 * 3 + 1] += normal.y;
+        mesh.normals[i1 * 3 + 2] += normal.z;
+
+        mesh.normals[i2 * 3 + 0] += normal.x;
+        mesh.normals[i2 * 3 + 1] += normal.y;
+        mesh.normals[i2 * 3 + 2] += normal.z;
+    }
+
+    for (int i = 0; i < mesh.vertexCount; i++) {
+        Vector3 n = {
+            mesh.normals[i * 3 + 0],
+            mesh.normals[i * 3 + 1],
+            mesh.normals[i * 3 + 2]
+        };
+
+        n = Vector3Normalize(n);
+
+        mesh.normals[i * 3 + 0] = n.x;
+        mesh.normals[i * 3 + 1] = n.y;
+        mesh.normals[i * 3 + 2] = n.z;
+    }
+}
+
 inline Chunk GenerateChunk(int cx, int cz, Shader grassShader) {
     Chunk chunk;
     chunk.key = {cx, cz};
@@ -504,6 +565,8 @@ inline Chunk GenerateChunk(int cx, int cz, Shader grassShader) {
         }
     }
 
+    RecalculateTerrainNormals(mesh, verticesPerSide);
+
     UploadMesh(&mesh, false);
 
     chunk.terrainMesh = mesh;
@@ -555,14 +618,73 @@ inline Chunk GenerateChunk(int cx, int cz, Shader grassShader) {
     return chunk;
 }
 
-inline void DrawWaterAroundPlayer(Vector3 playerPos, float time) {
-    float size = 900.0f;
-    float pulse = sinf(time * 0.7f) * 0.04f;
+static const char* waterVertexShader = R"(
+#version 330
 
-    DrawPlane(
-        {playerPos.x, WATER_LEVEL + pulse, playerPos.z},
-        Vector2{size, size},
-        Fade(Color{35, 125, 180, 255}, 0.70f)
+in vec3 vertexPosition;
+in vec2 vertexTexCoord;
+
+uniform mat4 mvp;
+uniform float time;
+
+out vec2 fragTexCoord;
+out float waveHeight;
+
+void main()
+{
+    vec3 pos = vertexPosition;
+
+    float wave1 = sin(pos.x * 0.030 + time * 0.85) * 0.18;
+    float wave2 = cos(pos.z * 0.042 + time * 0.65) * 0.12;
+    float wave3 = sin((pos.x + pos.z) * 0.018 + time * 0.45) * 0.20;
+
+    float wave = wave1 + wave2 + wave3;
+
+    pos.y += wave;
+
+    waveHeight = wave;
+    fragTexCoord = vertexTexCoord;
+
+    gl_Position = mvp * vec4(pos, 1.0);
+}
+)";
+
+static const char* waterFragmentShader = R"(
+#version 330
+
+in vec2 fragTexCoord;
+in float waveHeight;
+
+uniform float time;
+
+out vec4 finalColor;
+
+void main()
+{
+    vec3 deepWater = vec3(0.015, 0.115, 0.155);
+    vec3 midWater = vec3(0.020, 0.250, 0.310);
+    vec3 lightWater = vec3(0.200, 0.520, 0.600);
+
+    float shimmer =
+        sin((fragTexCoord.x * 95.0 + fragTexCoord.y * 55.0) + time * 1.8) * 0.5 + 0.5;
+
+    float softWave = smoothstep(-0.25, 0.35, waveHeight);
+    float highlight = smoothstep(0.82, 1.0, shimmer) * 0.22;
+
+    vec3 color = mix(deepWater, midWater, softWave);
+    color = mix(color, lightWater, highlight);
+
+    finalColor = vec4(color, 1.0);
+}
+)";
+
+inline void DrawWaterAroundPlayer(Model waterModel, Vector3 playerPos)
+{
+    DrawModel(
+        waterModel,
+        Vector3{playerPos.x, WATER_LEVEL, playerPos.z},
+        1.0f,
+        WHITE
     );
 }
 
@@ -642,89 +764,208 @@ inline void DrawFlowerModels(const std::map<ChunkKey, Chunk>& chunks, Vector3 pl
 }
 
 inline void DrawClouds(float time, Vector3 playerPos) {
-    for (int i = 0; i < 32; i++) {
-        float x = playerPos.x + sinf(i * 91.7f) * 520.0f;
-        float z = playerPos.z + cosf(i * 71.3f) * 520.0f;
+    for (int i = 0; i < 26; i++) {
+        float x = playerPos.x + sinf(i * 91.7f) * 900.0f;
+        float z = playerPos.z + cosf(i * 71.3f) * 900.0f;
 
-        x += sinf(time * 0.015f + i) * 90.0f;
+        x += sinf(time * 0.012f + i * 2.0f) * 130.0f;
+        z += cosf(time * 0.010f + i * 1.4f) * 60.0f;
 
-        float y = 95.0f + sinf(i * 0.7f) * 15.0f;
-        float s = 10.0f + (i % 5) * 4.0f;
+        float y = 260.0f + sinf(i * 0.7f) * 45.0f;
+        float s = 10.0f + (i % 6) * 3.0f;
 
-        Color c = Fade(WHITE, 0.78f);
+        Color c = Fade(Color{230, 238, 238, 255}, 0.38f);
+
         Vector3 p = {x, y, z};
 
-        DrawSphere(p, s, c);
-        DrawSphere({p.x + s * 0.7f, p.y + 2.0f, p.z}, s * 0.8f, c);
-        DrawSphere({p.x - s * 0.7f, p.y + 1.0f, p.z}, s * 0.75f, c);
-        DrawSphere({p.x, p.y + 3.0f, p.z + s * 0.4f}, s * 0.7f, c);
+        DrawSphere({p.x, p.y, p.z}, s * 1.25f, c);
+        DrawSphere({p.x + s * 1.15f, p.y - 2.0f, p.z}, s * 0.95f, c);
+        DrawSphere({p.x - s * 1.20f, p.y - 1.0f, p.z}, s * 0.90f, c);
+        DrawSphere({p.x + s * 0.35f, p.y + 4.0f, p.z + s * 0.55f}, s * 0.82f, c);
+        DrawSphere({p.x - s * 0.45f, p.y + 3.0f, p.z - s * 0.45f}, s * 0.78f, c);
+
+        DrawSphere({p.x, p.y - 7.0f, p.z}, s * 1.7f, Fade(Color{190, 205, 210, 255}, 0.16f));
     }
 }
 
-inline void DrawCuteAlien(Vector3 pos, float yawDeg, bool isMoving, float time) {
+    inline void DrawCuteAlien(
+        Vector3 pos,
+        float yawDeg,
+        bool isMoving,
+        bool isSprinting,
+        float verticalVelocity,
+        bool grounded,
+        float time
+    ) {
     float yaw = yawDeg * DEG2RAD;
 
     Vector3 forward = {sinf(yaw), 0, cosf(yaw)};
     Vector3 right = {cosf(yaw), 0, -sinf(yaw)};
 
-    float walk = isMoving ? sinf(time * 10.0f) : 0.0f;
-    float bodyBob = isMoving ? fabsf(sinf(time * 10.0f)) * 0.08f : 0.0f;
+    bool falling = !grounded && verticalVelocity < -4.0f;
+
+    float runSpeed = 2.0f;
+
+    if (isMoving && !isSprinting) {
+        runSpeed = 10.0f;
+    }
+
+    if (isMoving && isSprinting) {
+        runSpeed = 17.0f;
+    }
+
+    float runCycle = sinf(time * runSpeed);
+    float runCycleOpposite = sinf(time * runSpeed + PI);
+
+    float walk = isMoving ? runCycle : 0.0f;
+
+    float bodyBob = isMoving
+        ? fabsf(runCycle) * (isSprinting ? 0.14f : 0.08f)
+        : sinf(time * 2.0f) * 0.015f;
+
+    float bodyLean = isMoving
+        ? (isSprinting ? 0.18f : 0.09f)
+        : 0.0f;
+
+    if (falling) {
+        bodyBob = sinf(time * 8.0f) * 0.035f;
+        bodyLean = -0.05f;
+    }
 
     float footY = pos.y + 0.02f;
 
-    Vector3 body = {pos.x, footY + 0.78f + bodyBob, pos.z};
-    Vector3 head = {pos.x, footY + 1.62f + bodyBob, pos.z};
+    Color bodyColor = Color{78, 185, 125, 255};
+    Color headColor = Color{110, 220, 155, 255};
+    Color darkDetail = Color{32, 58, 45, 255};
 
-    DrawSphere(body, 0.46f, Color{125, 255, 175, 255});
-    DrawSphere(head, 0.60f, Color{155, 255, 195, 255});
+    Vector3 body = {pos.x, footY + 0.82f + bodyBob, pos.z};
+    Vector3 head = {pos.x, footY + 1.56f + bodyBob, pos.z};
+    body = Vector3Add(body, Vector3Scale(forward, bodyLean));
+    head = Vector3Add(head, Vector3Scale(forward, bodyLean * 1.4f));
 
-    Vector3 faceCenter = Vector3Add(head, Vector3Scale(forward, 0.52f));
+    // Body
+    DrawSphere(body, 0.42f, bodyColor);
 
-    DrawSphere(Vector3Add(faceCenter, Vector3Scale(right, -0.18f)), 0.12f, BLACK);
-    DrawSphere(Vector3Add(faceCenter, Vector3Scale(right, 0.18f)), 0.12f, BLACK);
+    // Head
+    DrawSphere(head, 0.56f, headColor);
 
-    Vector3 antLBase = Vector3Add(head, Vector3Scale(right, -0.25f));
-    antLBase.y += 0.42f;
+    // Neck
+    DrawCylinder(
+        {pos.x, footY + 1.15f + bodyBob, pos.z},
+        0.10f,
+        0.08f,
+        0.22f,
+        8,
+        Color{65, 150, 100, 255}
+    );
 
-    Vector3 antRBase = Vector3Add(head, Vector3Scale(right, 0.25f));
-    antRBase.y += 0.42f;
+    // Eyes
+    Vector3 faceCenter = Vector3Add(head, Vector3Scale(forward, 0.48f));
 
-    Vector3 antLTop = Vector3Add(antLBase, Vector3Add(Vector3Scale(right, -0.15f), Vector3{0, 0.45f, 0}));
-    Vector3 antRTop = Vector3Add(antRBase, Vector3Add(Vector3Scale(right, 0.15f), Vector3{0, 0.45f, 0}));
+    Vector3 eyeL = Vector3Add(faceCenter, Vector3Scale(right, -0.17f));
+    Vector3 eyeR = Vector3Add(faceCenter, Vector3Scale(right, 0.17f));
 
-    DrawLine3D(antLBase, antLTop, DARKGREEN);
-    DrawLine3D(antRBase, antRTop, DARKGREEN);
-    DrawSphere(antLTop, 0.10f, YELLOW);
-    DrawSphere(antRTop, 0.10f, YELLOW);
+    DrawSphere(eyeL, 0.12f, BLACK);
+    DrawSphere(eyeR, 0.12f, BLACK);
 
-    float legSwing = walk * 0.32f;
+    DrawSphere(
+        Vector3Add(eyeL, {0.03f, 0.03f, 0.05f}),
+        0.03f,
+        WHITE
+    );
 
-    Vector3 hipL = Vector3Add(body, Vector3Scale(right, -0.22f));
-    Vector3 hipR = Vector3Add(body, Vector3Scale(right, 0.22f));
+    DrawSphere(
+        Vector3Add(eyeR, {0.03f, 0.03f, 0.05f}),
+        0.03f,
+        WHITE
+    );
 
-    hipL.y -= 0.34f;
-    hipR.y -= 0.34f;
+    // Antennas
+    Vector3 antLBase = Vector3Add(head, Vector3Scale(right, -0.22f));
+    antLBase.y += 0.36f;
+
+    Vector3 antRBase = Vector3Add(head, Vector3Scale(right, 0.22f));
+    antRBase.y += 0.36f;
+
+    Vector3 antLTop = Vector3Add(
+        antLBase,
+        Vector3Add(Vector3Scale(right, -0.10f), {0, 0.42f, 0})
+    );
+
+    Vector3 antRTop = Vector3Add(
+        antRBase,
+        Vector3Add(Vector3Scale(right, 0.10f), {0, 0.42f, 0})
+    );
+
+    DrawLine3D(antLBase, antLTop, darkDetail);
+    DrawLine3D(antRBase, antRTop, darkDetail);
+
+    DrawSphere(antLTop, 0.08f, Color{255, 220, 110, 255});
+    DrawSphere(antRTop, 0.08f, Color{255, 220, 110, 255});
+
+    // Legs
+    float legSwing = walk * (isSprinting ? 0.52f : 0.34f);
+
+    if (falling) {
+        legSwing = 0.12f * sinf(time * 5.0f);
+    }
+
+    Vector3 hipL = Vector3Add(body, Vector3Scale(right, -0.16f));
+    Vector3 hipR = Vector3Add(body, Vector3Scale(right, 0.16f));
+
+    hipL.y -= 0.30f;
+    hipR.y -= 0.30f;
 
     Vector3 footBase = {pos.x, footY, pos.z};
 
-    Vector3 footL = Vector3Add(footBase, Vector3Scale(right, -0.22f));
-    Vector3 footR = Vector3Add(footBase, Vector3Scale(right, 0.22f));
+    Vector3 footL = Vector3Add(footBase, Vector3Scale(right, -0.16f));
+    Vector3 footR = Vector3Add(footBase, Vector3Scale(right, 0.16f));
 
     footL = Vector3Add(footL, Vector3Scale(forward, legSwing));
     footR = Vector3Add(footR, Vector3Scale(forward, -legSwing));
 
-    DrawLine3D(hipL, footL, Color{60, 180, 105, 255});
-    DrawLine3D(hipR, footR, Color{60, 180, 105, 255});
+    DrawLine3D(hipL, footL, darkDetail);
+    DrawLine3D(hipR, footR, darkDetail);
 
-    DrawSphere(footL, 0.13f, Color{50, 150, 90, 255});
-    DrawSphere(footR, 0.13f, Color{50, 150, 90, 255});
+    DrawSphere(footL, 0.10f, Color{48, 110, 75, 255});
+    DrawSphere(footR, 0.10f, Color{48, 110, 75, 255});
 
-    Vector3 armL1 = Vector3Add(body, Vector3Scale(right, -0.48f));
-    Vector3 armR1 = Vector3Add(body, Vector3Scale(right, 0.48f));
+    // Arms
+    Vector3 armL1 = Vector3Add(body, Vector3Scale(right, -0.42f));
+    Vector3 armR1 = Vector3Add(body, Vector3Scale(right, 0.42f));
 
-    Vector3 armL2 = Vector3Add(armL1, Vector3Add(Vector3Scale(forward, -legSwing * 0.7f), Vector3{0, -0.45f, 0}));
-    Vector3 armR2 = Vector3Add(armR1, Vector3Add(Vector3Scale(forward, legSwing * 0.7f), Vector3{0, -0.45f, 0}));
+    float armSwing = isMoving
+    ? runCycleOpposite * (isSprinting ? 0.58f : 0.34f)
+    : sinf(time * 2.0f) * 0.04f;
 
-    DrawLine3D(armL1, armL2, Color{80, 220, 130, 255});
-    DrawLine3D(armR1, armR2, Color{80, 220, 130, 255});
+    Vector3 armL2;
+    Vector3 armR2;
+
+    if (falling) {
+        armL2 = Vector3Add(
+            armL1,
+            Vector3Add(Vector3Scale(right, -0.10f), {0, 0.42f, 0})
+        );
+
+        armR2 = Vector3Add(
+            armR1,
+            Vector3Add(Vector3Scale(right, 0.10f), {0, 0.42f, 0})
+        );
+    } else {
+        armL2 = Vector3Add(
+            armL1,
+            Vector3Add(Vector3Scale(forward, armSwing), {0, -0.42f, 0})
+        );
+
+        armR2 = Vector3Add(
+            armR1,
+            Vector3Add(Vector3Scale(forward, -armSwing), {0, -0.42f, 0})
+        );
+    }
+
+    DrawLine3D(armL1, armL2, darkDetail);
+    DrawLine3D(armR1, armR2, darkDetail);
+
+    DrawSphere(armL2, 0.08f, Color{58, 140, 90, 255});
+    DrawSphere(armR2, 0.08f, Color{58, 140, 90, 255});
 }

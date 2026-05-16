@@ -20,57 +20,64 @@ const float PLAYER_FLY_SPEED = 24.0f;
 const float JUMP_FORCE = 15.0f;
 const float GRAVITY = 38.0f;
 
-inline void DrawLoadingScreen(int loadedInitialChunks, int totalInitialChunks) {
+inline void DrawLoadingScreen(Texture2D preloadTexture, int loadedInitialChunks, int totalInitialChunks) {
     float progress = (float)loadedInitialChunks / (float)totalInitialChunks;
 
     BeginDrawing();
-
-    ClearBackground(Color{18, 28, 24, 255});
-
-    const char* title = "ENDLESS MEADOW";
-    const char* subtitle = "Generating procedural world...";
-
-    int titleSize = 42;
-    int subSize = 20;
-
-    int titleWidth = MeasureText(title, titleSize);
-    int subWidth = MeasureText(subtitle, subSize);
+    ClearBackground(BLACK);
 
     int screenW = GetScreenWidth();
     int screenH = GetScreenHeight();
 
-    int centerX = screenW / 2;
-    int centerY = screenH / 2;
+    float scale = fmaxf(
+        (float)screenW / preloadTexture.width,
+        (float)screenH / preloadTexture.height
+    );
 
-    DrawText(title, centerX - titleWidth / 2, centerY - 120, titleSize, WHITE);
-    DrawText(subtitle, centerX - subWidth / 2, centerY - 62, subSize, RAYWHITE);
+    float drawW = preloadTexture.width * scale;
+    float drawH = preloadTexture.height * scale;
 
-    int barW = 460;
-    int barH = 22;
+    DrawTextureEx(
+        preloadTexture,
+        Vector2{(screenW - drawW) / 2.0f, (screenH - drawH) / 2.0f},
+        0.0f,
+        scale,
+        WHITE
+    );
 
-    int barX = centerX - barW / 2;
-    int barY = centerY;
+    DrawRectangle(0, 0, screenW, screenH, Fade(BLACK, 0.18f));
+
+    const char* title = "ENDLESS MEADOW";
+    const char* subtitle = "Generating procedural world...";
+
+    DrawText(title, screenW / 2 - MeasureText(title, 46) / 2, screenH - 170, 46, WHITE);
+    DrawText(subtitle, screenW / 2 - MeasureText(subtitle, 22) / 2, screenH - 112, 22, RAYWHITE);
+
+    int barW = screenW * 0.42f;
+    int barH = 18;
+    int barX = screenW / 2 - barW / 2;
+    int barY = screenH - 70;
 
     DrawRectangleRounded(
         Rectangle{(float)barX, (float)barY, (float)barW, (float)barH},
         0.45f,
         16,
-        Color{45, 58, 50, 255}
+        Fade(BLACK, 0.55f)
     );
 
     DrawRectangleRounded(
         Rectangle{(float)barX, (float)barY, barW * progress, (float)barH},
         0.45f,
         16,
-        Color{90, 220, 120, 255}
+        Color{90, 255, 130, 255}
     );
 
     DrawText(
         TextFormat("%i%%", (int)(progress * 100.0f)),
-        centerX - 18,
-        centerY + 42,
+        screenW / 2 - 22,
+        screenH - 42,
         24,
-        GREEN
+        WHITE
     );
 
     EndDrawing();
@@ -91,6 +98,14 @@ inline void UnloadChunks(std::map<ChunkKey, Chunk>& chunks) {
 
 inline void RunGame() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Endless Meadow - GPU Grass C++ World");
+
+    ChangeDirectory(GetApplicationDirectory());
+
+    Texture2D preloadTexture = LoadTexture("assets/preload.png");
+
+    if (preloadTexture.id == 0) {
+        TraceLog(LOG_ERROR, "Nije ucitana assets/preload.png");
+    }
     Image icon = LoadImage("icon.png");
     SetWindowIcon(icon);
     UnloadImage(icon);
@@ -103,13 +118,22 @@ inline void RunGame() {
     int grassTimeLoc = GetShaderLocation(grassShader, "time");
     int windStrengthLoc = GetShaderLocation(grassShader, "windStrength");
 
+    Shader waterShader = LoadShaderFromMemory(waterVertexShader, waterFragmentShader);
+    int waterTimeLoc = GetShaderLocation(waterShader, "time");
+
+    Mesh waterMesh = GenMeshPlane(760.0f, 760.0f, 140, 140);
+
+    Model waterModel = LoadModelFromMesh(waterMesh);
+
+    waterModel.materials[0].shader = waterShader;
+
     float windStrength = 0.65f;
 
     Camera3D camera = {0};
     camera.position = {0, 12, 20};
     camera.target = {0, 2, 0};
     camera.up = {0, 1, 0};
-    camera.fovy = 60;
+    camera.fovy = 45;
     camera.projection = CAMERA_PERSPECTIVE;
 
     Vector3 playerPos = {0, 0, 0};
@@ -119,8 +143,8 @@ inline void RunGame() {
     bool isMoving = false;
 
     float cameraYaw = 0.0f;
-    float cameraPitch = 18.0f;
-    float cameraDistance = 22.0f;
+    float cameraPitch = 13.0f;
+    float cameraDistance = 30.0f;
 
     bool grounded = false;
     bool pauseMenu = false;
@@ -143,7 +167,7 @@ inline void RunGame() {
         for (int x = -VIEW_DISTANCE; x <= VIEW_DISTANCE; x++) {
             ChunkKey key = {pcx + x, pcz + z};
 
-            DrawLoadingScreen(loadedInitialChunks, totalInitialChunks);
+            DrawLoadingScreen(preloadTexture, loadedInitialChunks, totalInitialChunks);
 
             chunks[key] = GenerateChunk(key.x, key.z, grassShader);
 
@@ -151,12 +175,175 @@ inline void RunGame() {
         }
     }
 
+    EnableCursor();
+    bool waitingForStart = true;
+
+    while (waitingForStart && !WindowShouldClose())
+    {
+        BeginDrawing();
+
+        ClearBackground(BLACK);
+
+        int screenW = GetScreenWidth();
+        int screenH = GetScreenHeight();
+
+        float scale = fmaxf(
+            (float)screenW / preloadTexture.width,
+            (float)screenH / preloadTexture.height
+        );
+
+        float drawW = preloadTexture.width * scale;
+        float drawH = preloadTexture.height * scale;
+
+        DrawTextureEx(
+            preloadTexture,
+            Vector2{
+                (screenW - drawW) / 2.0f,
+                (screenH - drawH) / 2.0f
+            },
+            0.0f,
+            scale,
+            WHITE
+        );
+
+        DrawRectangle(0, 0, screenW, screenH, Fade(BLACK, 0.22f));
+
+        const char* title = "ENDLESS MEADOW";
+
+        DrawText(
+            title,
+            screenW / 2 - MeasureText(title, 58) / 2,
+            120,
+            58,
+            WHITE
+        );
+
+        Rectangle startBtn = {
+            screenW / 2.0f - 180,
+            screenH / 2.0f + 40,
+            360,
+            72
+        };
+
+        Rectangle exitBtn = {
+            screenW / 2.0f - 180,
+            screenH / 2.0f + 132,
+            360,
+            72
+        };
+
+        bool hoverStart = CheckCollisionPointRec(GetMousePosition(), startBtn);
+        bool hoverExit = CheckCollisionPointRec(GetMousePosition(), exitBtn);
+
+        Color startGlow = hoverStart
+            ? Color{120, 255, 170, 255}
+            : Color{70, 220, 130, 235};
+
+        Color exitGlow = hoverExit
+            ? Color{255, 120, 120, 255}
+            : Color{185, 70, 70, 225};
+
+        DrawRectangleRounded(
+            Rectangle{
+                startBtn.x - 4,
+                startBtn.y - 4,
+                startBtn.width + 8,
+                startBtn.height + 8
+            },
+            0.30f,
+            24,
+            Fade(startGlow, 0.18f)
+        );
+
+        DrawRectangleRounded(
+            startBtn,
+            0.30f,
+            24,
+            Fade(BLACK, 0.55f)
+        );
+
+        DrawRectangleRoundedLines(
+            startBtn,
+            0.30f,
+            24,
+            startGlow
+        );
+
+        DrawRectangleRounded(
+            Rectangle{
+                exitBtn.x - 4,
+                exitBtn.y - 4,
+                exitBtn.width + 8,
+                exitBtn.height + 8
+            },
+            0.30f,
+            24,
+            Fade(exitGlow, 0.15f)
+        );
+
+        DrawRectangleRounded(
+            exitBtn,
+            0.30f,
+            24,
+            Fade(BLACK, 0.55f)
+        );
+
+        DrawRectangleRoundedLines(
+            exitBtn,
+            0.30f,
+            24,
+            exitGlow
+        );
+
+        DrawText(
+            "START GAME",
+            screenW / 2 - MeasureText("START GAME", 36) / 2,
+            screenH / 2 + 58,
+            36,
+            WHITE
+        );
+
+        DrawText(
+            "EXIT",
+            screenW / 2 - MeasureText("EXIT", 34) / 2,
+            screenH / 2 + 150,
+            34,
+            RAYWHITE
+        );
+
+        const char* author = "By Armin Lisic";
+
+        DrawText(
+            author,
+            screenW - MeasureText(author, 20) - 26,
+            screenH - 34,
+            20,
+            Fade(RAYWHITE, 0.82f)
+        );
+
+        EndDrawing();
+
+        if (hoverStart && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            DisableCursor();
+            waitingForStart = false;
+        }
+
+        if (hoverExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            UnloadTexture(preloadTexture);
+            UnloadShader(grassShader);
+            CloseWindow();
+            return;
+        }
+    }
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
         float time = GetTime();
 
         SetShaderValue(grassShader, grassTimeLoc, &time, SHADER_UNIFORM_FLOAT);
         SetShaderValue(grassShader, windStrengthLoc, &windStrength, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(waterShader, waterTimeLoc, &time, SHADER_UNIFORM_FLOAT);
 
         if (!pauseMenu) {
             Vector2 mouse = GetMouseDelta();
@@ -320,7 +507,7 @@ inline void RunGame() {
         }
 
         BeginDrawing();
-        ClearBackground(Color{95, 170, 255, 255});
+        ClearBackground(Color{135, 170, 190, 255});
 
         BeginMode3D(camera);
         DrawClouds(time, playerPos);
@@ -333,10 +520,10 @@ inline void RunGame() {
             140.0f
         };
 
-        DrawSphere(sunPos, 34.0f, Color{255, 245, 200, 255});
-        DrawSphere(sunPos, 55.0f, Fade(Color{255, 220, 120, 255}, 0.22f));
-        DrawSphere(sunPos, 85.0f, Fade(Color{255, 190, 90, 255}, 0.12f));
-        DrawSphere(sunPos, 130.0f, Fade(Color{255, 160, 70, 255}, 0.05f));
+        DrawSphere(sunPos, 28.0f, Color{255, 238, 190, 255});
+        DrawSphere(sunPos, 70.0f, Fade(Color{255, 196, 105, 255}, 0.16f));
+        DrawSphere(sunPos, 125.0f, Fade(Color{255, 150, 80, 255}, 0.07f));
+        DrawSphere(sunPos, 210.0f, Fade(Color{255, 120, 60, 255}, 0.025f));
 
         for (const auto& item : chunks) {
             const Chunk& c = item.second;
@@ -352,13 +539,23 @@ inline void RunGame() {
             }
         }
 
-        DrawWaterAroundPlayer(playerPos, time);
+        DrawWaterAroundPlayer(waterModel, playerPos);
 
         // GPU flower rendering
         DrawFlowerModels(chunks, playerPos);
 
         DrawNature(chunks, playerPos, time);
-        DrawCuteAlien(playerPos, playerYaw, isMoving, time);
+        bool isSprinting = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
+
+            DrawCuteAlien(
+                playerPos,
+                playerYaw,
+                isMoving,
+                isSprinting,
+                velocity.y,
+                grounded,
+                time
+            );
 
         EndMode3D();
 
@@ -421,6 +618,12 @@ inline void RunGame() {
     }
 
     UnloadChunks(chunks);
+
+    UnloadModel(waterModel);
+    UnloadShader(waterShader);
+
     UnloadShader(grassShader);
+    UnloadTexture(preloadTexture);
+
     CloseWindow();
 }

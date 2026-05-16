@@ -23,3 +23,9 @@ set_target_properties(EndlessMeadow PROPERTIES
 )
 
 target_link_libraries(EndlessMeadow raylib)
+
+add_custom_command(TARGET EndlessMeadow POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets
+    $<TARGET_FILE_DIR:EndlessMeadow>/assets
+)
