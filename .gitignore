@@ -1,0 +1,52 @@
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Build folder
+build/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Logs
+*.log
+
+# Temporary
+*.tmp
+*.temp
+
+# macOS binaries
+*.dSYM/
+
+# Raylib generated
+rlgl.log
+
+# Cache
+.cache/
+
+# CLion / JetBrains
+.idea/
+
+# Xcode
+DerivedData/
+*.xcworkspace
+*.xcodeproj/project.xcworkspace/
+
+# Visual Studio
+*.vcxproj*
+*.sln
+
+graphify-out/cache/
+graphify-out/manifest.json
+graphify-out/.graphify_analysis.json
