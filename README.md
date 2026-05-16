@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./endlessmeadow.png" width="180" alt="Endless Meadow Logo">
+  <img src="./assets/endlessmeadow.png" width="180" alt="Endless Meadow Logo">
 </p>
 
 <h1 align="center">Endless Meadow 🌿</h1>
@@ -16,7 +16,7 @@
 
 ---
 
-![Endless Meadow](./meadoww.png)
+![Endless Meadow](./assets/meadoww.png)
 
 
 A cinematic procedural meadow prototype built in **modern C++**, powered by **raylib**, procedural terrain generation and GPU-animated grass rendering.
@@ -27,7 +27,7 @@ Endless Meadow creates an infinite stylized open world featuring dynamic terrain
 
 # Architecture Graph
 
-![Architecture Graph](./graph.png)
+![Architecture Graph](./assets/graphic.png)
 
 The project architecture is separated into:
 

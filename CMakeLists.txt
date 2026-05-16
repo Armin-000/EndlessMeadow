@@ -10,10 +10,10 @@ find_package(raylib REQUIRED)
 add_executable(EndlessMeadow
     MACOSX_BUNDLE
     main.cpp
-    meadow.icns
+    assets/meadow.icns
 )
 
-set_source_files_properties(meadow.icns PROPERTIES
+set_source_files_properties(assets/meadow.icns PROPERTIES
     MACOSX_PACKAGE_LOCATION "Resources"
 )
 
