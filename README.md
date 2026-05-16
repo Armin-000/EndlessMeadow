@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./icon.png" width="180" alt="Endless Meadow Logo">
+  <img src="./endlessmeadow.png" width="180" alt="Endless Meadow Logo">
 </p>
 
 <h1 align="center">Endless Meadow 🌿</h1>
