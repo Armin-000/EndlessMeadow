@@ -1,3 +1,4 @@
+
 <p align="center">
   <img src="./assets/endlessmeadow.png" width="180" alt="Endless Meadow Logo">
 </p>
@@ -5,27 +6,38 @@
 <h1 align="center">Endless Meadow 🌿</h1>
 
 <p align="center">
-  A cinematic procedural meadow prototype built in modern C++.
+  A cinematic procedural meadow prototype and experimental mini-engine built in modern C++.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue">
-  <img src="https://img.shields.io/badge/raylib-5.0-green">
+  <img src="https://img.shields.io/badge/raylib-5.5-green">
   <img src="https://img.shields.io/badge/OpenGL-Renderer-orange">
+  <img src="https://img.shields.io/badge/Procedural-Generation-brightgreen">
 </p>
 
 <p align="center">
-  <img src="./assets/wallpaper.png" width="100%" alt="Endless Meadow Preload">
+  <img src="./assets/wallpaper.png" width="100%" alt="Endless Meadow Wallpaper">
 </p>
 
 ---
 
 ![Endless Meadow](./assets/meadoww.png)
 
+---
 
-A cinematic procedural meadow prototype built in **modern C++**, powered by **raylib**, procedural terrain generation and GPU-animated grass rendering.
+# Endless Meadow
 
-Endless Meadow creates an infinite stylized open world featuring dynamic terrain, animated vegetation, atmospheric lighting and real-time chunk streaming.
+Endless Meadow is a cinematic procedural world prototype powered by:
+
+- modern C++
+- raylib
+- OpenGL
+- procedural terrain synthesis
+- real-time chunk streaming
+- GPU-style vegetation rendering
+
+The project focuses on creating a stylized infinite natural world with dynamic terrain generation, animated vegetation, atmospheric rendering and cinematic exploration systems.
 
 ---
 
@@ -36,23 +48,44 @@ Endless Meadow creates an infinite stylized open world featuring dynamic terrain
 The project architecture is separated into:
 
 - `main.cpp` → application entry point
-- `game.hpp` → gameplay loop, rendering pipeline, camera system
-- `world.hpp` → procedural terrain generation, chunk system, grass rendering, environment simulation
+- `game.hpp` → gameplay loop, rendering systems, camera logic, loading screen
+- `world.hpp` → procedural terrain generation, environment systems and world rendering
 
 ---
 
 # Features
 
-- 🌱 GPU animated grass shader
-- ⛰️ Infinite procedural terrain generation
-- 🌊 Dynamic water rendering
+- 🌱 Procedural grass rendering
+- ⛰️ Infinite procedural terrain
+- 🌊 Dynamic water rendering system
+- ☁️ Atmospheric cloud rendering
 - 🌲 Procedural trees and rocks
 - 👾 Animated alien character
-- 🎥 Cinematic free camera system
-- ☀️ Atmospheric lighting
-- ⚡ Chunk streaming & world loading
-- 🧠 Noise-based terrain synthesis
-- 🖥️ Built with modern C++ and raylib
+- 🎥 Cinematic free camera
+- ⚡ Chunk streaming system
+- ☀️ Dynamic environment rendering
+- 🧠 Fractal noise terrain synthesis
+- 🖥️ Modern C++ rendering architecture
+- 🎮 Interactive preload screen
+- 🧩 Runtime procedural mesh generation
+
+---
+
+# Engine Systems
+
+The engine currently includes:
+
+- procedural terrain synthesis
+- chunk streaming system
+- dynamic water rendering
+- animated cloud rendering
+- runtime environment generation
+- animated character controller
+- procedural flower spawning
+- grass mesh generation
+- terrain color blending
+- cinematic preload pipeline
+- atmospheric rendering systems
 
 ---
 
@@ -61,10 +94,13 @@ The project architecture is separated into:
 - C++
 - raylib
 - OpenGL
-- GLSL shaders
+- GLSL
 - CMake
-- Procedural generation
-- Fractal noise synthesis
+- Procedural Generation
+- Fractal Noise
+- Runtime Mesh Generation
+- Graphify
+- Ollama
 
 ---
 
@@ -72,71 +108,115 @@ The project architecture is separated into:
 
 ```txt
 EndlessMeadow/
+├── assets/
+│   ├── wallpaper.png
+│   ├── meadoww.png
+│   ├── endlessmeadow.png
+│   ├── graphic.png
+│   ├── preload.png
+│   └── meadow.icns
+│
+├── build/
+├── graphify-out/
+├── .vscode/
+│
 ├── main.cpp
 ├── game.hpp
 ├── world.hpp
-├── meadow.png
-├── graph-tree.png
 ├── CMakeLists.txt
+├── GRAPHIFY.md
 ├── README.md
-├── LICENSE.md
-└── build/
+└── LICENSE.md
 ````
 
 ---
 
 # Rendering Pipeline
 
-The engine uses:
+The rendering system uses:
 
 * procedural mesh generation
-* GPU-instanced grass rendering
-* custom GLSL grass shaders
-* chunk-based terrain streaming
-* fractal noise terrain synthesis
-* real-time environment rendering
+* runtime terrain synthesis
+* chunk-based world streaming
+* layered terrain rendering
+* dynamic environment rendering
+* atmospheric color blending
+* procedural vegetation placement
 
-The terrain is generated dynamically using layered fractal noise functions and ridge noise shaping to simulate natural hills, mountains and meadow formations.
+Terrain is generated using layered fractal noise functions combined with height shaping techniques to simulate stylized hills, valleys and natural landscapes.
 
 ---
 
 # Terrain System
 
-The world generation system includes:
+The terrain engine includes:
 
 * infinite chunk streaming
-* heightmap synthesis
-* terrain color blending
-* dynamic grass distribution
-* environmental object spawning
-* procedural rock and tree placement
+* procedural heightmap generation
+* runtime terrain loading
+* terrain color interpolation
+* biome-style environment variation
+* procedural object spawning
 
-Each chunk is generated independently and streamed around the player position in real time.
-
----
-
-# Grass Rendering
-
-The grass system uses:
-
-* GPU vertex animation
-* wind simulation
-* procedural blade placement
-* dynamic color variation
-* shader-based movement
-
-Grass blades are generated procedurally and animated entirely on the GPU for performance efficiency.
+Each chunk is generated independently and streamed dynamically around the player.
 
 ---
 
 # Water System
 
-The water layer is rendered dynamically around the player using:
+The water rendering system includes:
 
 * animated water movement
-* large-scale plane rendering
+* dynamic wave simulation
+* smooth water interpolation
+* terrain-integrated water rendering
 * atmospheric color blending
-* procedural world integration
+
+The water layer is rendered dynamically around the player position for seamless open-world integration.
+
+---
+
+# Environment System
+
+The environment renderer currently supports:
+
+* procedural tree placement
+* procedural flowers
+* animated clouds
+* dynamic terrain coloring
+* atmospheric sky rendering
+* environment object scattering
+
+---
+
+# Character System
+
+The alien controller includes:
+
+* animated running cycle
+* sprint animation
+* jump movement
+* falling animation states
+* smooth camera following
+* stylized procedural character rendering
+
+---
+
+# Architecture Workflow
+
+The architecture graph is generated using:
+
+* Graphify
+* Ollama
+* qwen2.5:7b
+
+This allows automatic extraction of:
+
+* file relationships
+* rendering systems
+* gameplay flow
+* procedural generation systems
+* engine architecture graphs
 
 ---
 
@@ -156,65 +236,70 @@ brew install raylib cmake
 
 ```bash
 git clone https://github.com/Armin-000/EndlessMeadow.git
+
 cd EndlessMeadow
 ```
 
 ---
 
-## Build project
+# Build
 
 ```bash
-mkdir build
-cd build
+rm -rf build
 
-cmake ..
-cmake --build .
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+cmake --build build
 ```
 
 ---
 
-## Run
+# Run
 
 ```bash
-./EndlessMeadow
+open build/EndlessMeadow.app
 ```
 
 ---
 
 # Controls
 
-| Key     | Action        |
-| ------- | ------------- |
-| W A S D | Move          |
-| Mouse   | Rotate camera |
-| Space   | Jump          |
-| ESC     | Exit          |
+| Key          | Action              |
+| ------------ | ------------------- |
+| W A S D      | Move                |
+| Mouse        | Rotate Camera       |
+| SHIFT        | Sprint              |
+| SPACE        | Jump                |
+| Double SPACE | Fly Mode            |
+| ESC          | Unlock Mouse Cursor |
 
 ---
 
 # Procedural Generation
 
-The project uses multiple procedural generation techniques:
+The engine uses multiple procedural generation techniques:
 
 * layered fractal noise
-* ridge noise terrain shaping
-* chunk-based world streaming
+* terrain height shaping
+* runtime chunk streaming
 * procedural vegetation placement
-* randomized environmental variation
+* randomized environment variation
+* terrain color synthesis
 
-This allows the world to generate infinitely without storing massive map data.
+This allows the world to generate infinitely without storing large map data.
 
 ---
 
 # Performance
 
-The engine includes:
+The project includes:
 
 * chunk visibility optimization
+* runtime mesh generation
+* lightweight rendering systems
 * procedural asset generation
-* GPU-based grass animation
-* distance-based rendering
-* optimized terrain mesh generation
+* optimized terrain synthesis
+* distance-based environment rendering
 
 ---
 
@@ -225,7 +310,7 @@ This project was created as:
 * a graphics programming experiment
 * a procedural rendering showcase
 * a terrain generation prototype
-* a GPU grass rendering demonstration
+* a mini-engine architecture experiment
 * a personal portfolio project
 
 ---
@@ -234,14 +319,17 @@ This project was created as:
 
 Planned upgrades include:
 
-* realistic sky rendering
-* volumetric fog
-* physically-based lighting
-* improved terrain erosion
-* advanced water shaders
+* volumetric clouds
+* physically-based rendering (PBR)
+* terrain erosion simulation
 * biome generation
-* weather simulation
+* dynamic weather system
+* day/night transitions
 * real-time shadows
+* GPU instanced foliage
+* post-processing effects
+* cinematic camera tools
+* ambient wildlife systems
 
 ---
 
