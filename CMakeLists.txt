@@ -4,16 +4,21 @@ project(EndlessMeadow CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(raylib REQUIRED)
 
 add_executable(EndlessMeadow
     MACOSX_BUNDLE
-    main.cpp
-    assets/meadow.icns
+    src/main.cpp
+    assets/icons/meadow.icns
 )
 
-set_source_files_properties(assets/meadow.icns PROPERTIES
+target_include_directories(EndlessMeadow PRIVATE
+    include
+)
+
+set_source_files_properties(assets/icons/meadow.icns PROPERTIES
     MACOSX_PACKAGE_LOCATION "Resources"
 )
 
