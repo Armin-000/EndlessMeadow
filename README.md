@@ -109,25 +109,35 @@ The engine currently includes:
 ```txt
 EndlessMeadow/
 ├── assets/
-│   ├── wallpaper.png
-│   ├── meadoww.png
-│   ├── endlessmeadow.png
-│   ├── graphic.png
-│   ├── preload.png
-│   └── meadow.icns
+│   ├── icons/
+│   │   └── meadow.icns
+│   │
+│   ├── images/
+│   │   ├── wallpaper.png
+│   │   ├── meadoww.png
+│   │   ├── endlessmeadow.png
+│   │   ├── graphic.png
+│   │   └── preload.png
 │
 ├── build/
-├── graphify-out/
-├── .vscode/
+├── docs/
+│   └── GRAPHIFY.md
 │
-├── main.cpp
-├── game.hpp
-├── world.hpp
+├── include/
+│   ├── game.hpp
+│   └── world.hpp
+│
+├── src/
+│   └── main.cpp
+│
+├── tools/
+│   └── graphify/
+│
+├── .vscode/
 ├── CMakeLists.txt
-├── GRAPHIFY.md
 ├── README.md
 └── LICENSE.md
-````
+```
 
 ---
 
