@@ -1,6 +1,8 @@
 #pragma once
 
 #include "world.hpp"
+#include "map.hpp"
+#include "inventory.hpp"
 
 #include "raylib.h"
 #include "raymath.h"
@@ -148,6 +150,14 @@ inline void RunGame() {
 
     bool grounded = false;
     bool pauseMenu = false;
+    bool showMap = false;
+    bool showInventory = false;
+    int inventorySlots[10] = {0};
+    int selectedSlot = -1;
+
+    float attackTimer = 0.0f;
+    float boomTimer = 0.0f;
+    Vector3 boomPos = {0, 0, 0};
 
     bool flyMode = false;
     float lastSpacePressTime = -10.0f;
@@ -341,6 +351,17 @@ inline void RunGame() {
         float dt = GetFrameTime();
         float time = GetTime();
 
+        if (attackTimer > 0.0f) attackTimer -= dt;
+        if (boomTimer > 0.0f) boomTimer -= dt;
+
+        for (auto& item : chunks) {
+            for (Tree& tree : item.second.trees) {
+                if (tree.shakeTimer > 0.0f) {
+                    tree.shakeTimer -= dt;
+                }
+            }
+        }
+
         SetShaderValue(grassShader, grassTimeLoc, &time, SHADER_UNIFORM_FLOAT);
         SetShaderValue(grassShader, windStrengthLoc, &windStrength, SHADER_UNIFORM_FLOAT);
         SetShaderValue(waterShader, waterTimeLoc, &time, SHADER_UNIFORM_FLOAT);
@@ -361,6 +382,22 @@ inline void RunGame() {
             else DisableCursor();
         }
 
+        if (!pauseMenu && IsKeyPressed(KEY_E)) {
+            showInventory = !showInventory;
+
+            selectedSlot = -1;
+
+            if (showInventory) {
+                EnableCursor();
+            } else {
+                DisableCursor();
+            }
+        }
+
+        if (!pauseMenu && IsKeyPressed(KEY_M)) {
+            showMap = !showMap;
+        }
+
         float yawRad = cameraYaw * DEG2RAD;
 
         Vector3 forward = {-sinf(yawRad), 0, -cosf(yawRad)};
@@ -368,7 +405,7 @@ inline void RunGame() {
 
         Vector3 input = {0, 0, 0};
 
-        if (!pauseMenu) {
+        if (!pauseMenu && !showInventory) {
             if (IsKeyDown(KEY_W)) input = Vector3Add(input, forward);
             if (IsKeyDown(KEY_S)) input = Vector3Subtract(input, forward);
             if (IsKeyDown(KEY_D)) input = Vector3Add(input, right);
@@ -394,14 +431,111 @@ inline void RunGame() {
         if (Vector3Length(input) > 0.01f) {
             input = Vector3Normalize(input);
 
-            playerPos.x += input.x * currentSpeed * dt;
-            playerPos.z += input.z * currentSpeed * dt;
+            float playerRadius = 0.42f;
+            float playerHeight = 1.9f;
+
+            Vector3 nextX = playerPos;
+            nextX.x += input.x * currentSpeed * dt;
+
+            if (!CheckNatureCollision(chunks, nextX, playerRadius, playerHeight)) {
+                playerPos.x = nextX.x;
+            }
+
+            Vector3 nextZ = playerPos;
+            nextZ.z += input.z * currentSpeed * dt;
+
+            if (!CheckNatureCollision(chunks, nextZ, playerRadius, playerHeight)) {
+                playerPos.z = nextZ.z;
+            }
 
             playerYaw = atan2f(input.x, input.z) * RAD2DEG;
             isMoving = true;
         }
 
+        if (!pauseMenu && !showInventory && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            const float hitRange = 4.2f;
+            const float minDot = 0.45f;
+
+            Vector3 attackForward = {
+                sinf(playerYaw * DEG2RAD),
+                0.0f,
+                cosf(playerYaw * DEG2RAD)
+            };
+
+            Chunk* targetChunk = nullptr;
+            int targetTreeIndex = -1;
+            float bestDistance = 99999.0f;
+
+            for (auto& item : chunks) {
+                Chunk& chunk = item.second;
+
+                for (int i = 0; i < (int)chunk.trees.size(); i++) {
+                    Tree& tree = chunk.trees[i];
+
+                    Vector3 toTree = Vector3Subtract(tree.position, playerPos);
+                    toTree.y = 0.0f;
+
+                    float dist = Vector3Length(toTree);
+
+                    if (dist > hitRange || dist < 0.01f) {
+                        continue;
+                    }
+
+                    Vector3 dirToTree = Vector3Normalize(toTree);
+                    float dot = Vector3DotProduct(attackForward, dirToTree);
+
+                    if (dot > minDot && dist < bestDistance) {
+                        bestDistance = dist;
+                        targetChunk = &chunk;
+                        targetTreeIndex = i;
+                    }
+                }
+            }
+
+            if (targetChunk != nullptr && targetTreeIndex >= 0) {
+                Tree& tree = targetChunk->trees[targetTreeIndex];
+
+                tree.hitCount++;
+                tree.shakeTimer = 0.25f;
+                attackTimer = 0.22f;
+
+                if (tree.hitCount >= 3) {
+                    boomPos = tree.position;
+                    boomPos.y += 1.6f;
+                    boomTimer = 0.45f;
+
+                    targetChunk->trees.erase(
+                        targetChunk->trees.begin() + targetTreeIndex
+                    );
+
+                    bool addedWood = false;
+
+                    for (int i = 0; i < 10; i++) {
+                        if (inventorySlots[i] > 0) {
+                            inventorySlots[i] += 3;
+                            addedWood = true;
+                            break;
+                        }
+                    }
+
+                    if (!addedWood) {
+                        inventorySlots[0] = 3;
+                    }
+                }
+            }
+        }
         float terrainY = GetTerrainHeight(playerPos.x, playerPos.z);
+
+        float playerRadius = 0.42f;
+        float playerHeight = 1.9f;
+
+        float groundY = GetSmartGroundY(
+            chunks,
+            playerPos,
+            terrainY,
+            playerRadius,
+            velocity.y
+        );
 
         if (!pauseMenu && IsKeyPressed(KEY_SPACE)) {
             float now = GetTime();
@@ -441,10 +575,12 @@ inline void RunGame() {
             velocity.y -= GRAVITY * dt;
             playerPos.y += velocity.y * dt;
 
-            if (playerPos.y <= terrainY) {
-                playerPos.y = terrainY;
+            if (playerPos.y <= groundY) {
+                playerPos.y = groundY;
                 velocity.y = 0;
                 grounded = true;
+            } else {
+                grounded = false;
             }
         }
 
@@ -554,17 +690,39 @@ inline void RunGame() {
                 isSprinting,
                 velocity.y,
                 grounded,
-                time
+                time,
+                attackTimer
             );
 
+            if (boomTimer > 0.0f) {
+                float p = boomTimer / 0.45f;
+                float size = (1.0f - p) * 2.4f;
+
+                DrawSphere(boomPos, size, Fade(Color{220, 220, 210, 255}, p));
+
+                DrawSphere(
+                    {boomPos.x + 0.8f, boomPos.y + 0.3f, boomPos.z},
+                    size * 0.55f,
+                    Fade(Color{240, 240, 230, 255}, p)
+                );
+
+                DrawSphere(
+                    {boomPos.x - 0.7f, boomPos.y - 0.1f, boomPos.z + 0.4f},
+                    size * 0.45f,
+                    Fade(Color{210, 210, 200, 255}, p)
+                );
+            }
+
         EndMode3D();
+        DrawWorldMapOverlay(chunks, playerPos, showMap);
+        DrawInventoryOverlay(showInventory, inventorySlots, selectedSlot);
 
         DrawRectangle(16, 16, 520, 220, Fade(BLACK, 0.48f));
         DrawText("Endless Meadow - GPU Grass Prototype", 28, 28, 20, WHITE);
         DrawText("WASD = move | SHIFT = sprint", 28, 60, 18, RAYWHITE);
         DrawText("SPACE = jump | Double SPACE = fly mode", 28, 86, 18, RAYWHITE);
         DrawText("Fly mode: SPACE up | CTRL down", 28, 112, 18, RAYWHITE);
-        DrawText("Mouse = camera | ESC = unlock mouse", 28, 138, 18, RAYWHITE);
+        DrawText("Mouse = camera | M = map | E = backpack | ESC = pause", 28, 138, 18, RAYWHITE);
         DrawText(TextFormat("Chunks: %i | Grass/chunk: %i | FPS: %i", (int)chunks.size(), GRASS_PER_CHUNK, GetFPS()), 28, 166, 18, RAYWHITE);
 
         if (flyMode) {

@@ -10,7 +10,18 @@ find_package(raylib REQUIRED)
 
 add_executable(EndlessMeadow
     MACOSX_BUNDLE
+
     src/main.cpp
+    src/world.cpp
+    src/alien.cpp
+    src/sky.cpp
+    src/water.cpp
+    src/terrain.cpp
+    src/vegetation.cpp
+    src/collisions.cpp
+    src/map.cpp
+    src/inventory.cpp
+
     assets/icons/meadow.icns
 )
 
