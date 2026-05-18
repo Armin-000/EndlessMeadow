@@ -6,7 +6,7 @@
 <h1 align="center">Endless Meadow 🌿</h1>
 
 <p align="center">
-  Cinematic procedural meadow prototype built with modern C++ and raylib.
+  A cinematic procedural meadow prototype and experimental mini-engine built in modern C++.
 </p>
 
 <p align="center">
@@ -14,6 +14,10 @@
   <img src="https://img.shields.io/badge/raylib-5.5-green">
   <img src="https://img.shields.io/badge/OpenGL-Renderer-orange">
   <img src="https://img.shields.io/badge/Procedural-Generation-brightgreen">
+</p>
+
+<p align="center">
+  <img src="./assets/wallpaper.png" width="100%" alt="Endless Meadow Wallpaper">
 </p>
 
 ---
