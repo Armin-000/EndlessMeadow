@@ -239,7 +239,7 @@ void DrawCuteAlien(
     float speedBend = 0.0f;
 
     if (isMoving) {
-        speedBend = isSprinting ? 0.78f : 0.28f;
+        speedBend = isSprinting ? 0.85f : 0.45f;
     }
 
     if (falling) {

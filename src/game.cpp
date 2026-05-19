@@ -5,6 +5,8 @@
 #include "../include/map.hpp"
 #include "../include/inventory.hpp"
 #include "../include/item_drops.hpp"
+#include "../include/sun.hpp"
+#include "../include/atmosphere.hpp"
 
 #include "raylib.h"
 #include "raymath.h"
@@ -656,24 +658,14 @@ void RunGame()
 
         BeginDrawing();
 
-        ClearBackground(Color{135, 170, 190, 255});
+        ClearBackground(BLACK);
+
+        DrawAtmosphereGradient();
 
         BeginMode3D(camera);
 
         DrawClouds(time, playerPos);
-
-        float sunTime = GetTime() * 0.03f;
-
-        Vector3 sunPos = {
-            cosf(sunTime) * 420.0f,
-            180.0f + sinf(sunTime) * 90.0f,
-            140.0f
-        };
-
-        DrawSphere(sunPos, 28.0f, Color{255, 238, 190, 255});
-        DrawSphere(sunPos, 70.0f, Fade(Color{255, 196, 105, 255}, 0.16f));
-        DrawSphere(sunPos, 125.0f, Fade(Color{255, 150, 80, 255}, 0.07f));
-        DrawSphere(sunPos, 210.0f, Fade(Color{255, 120, 60, 255}, 0.025f));
+        DrawSun(time, playerPos);
 
         for (const auto& item : chunks)
         {
@@ -842,5 +834,7 @@ void RunGame()
     UnloadShader(grassShader);
     UnloadTexture(preloadTexture);
 
+    UnloadSun();
+    
     CloseWindow();
 }
