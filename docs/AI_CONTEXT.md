@@ -1,30 +1,40 @@
 
 # AI_CONTEXT.md
 
-# Endless Meadow — AI Development Context
+# Endless Meadow
 
-Endless Meadow is a cinematic procedural meadow prototype and experimental mini-engine built in modern C++ using raylib and OpenGL.
+Cinematic procedural meadow prototype / experimental mini-engine.
 
-The project focuses on:
+Stack:
+- C++17
+- raylib
+- OpenGL
+- CMake
 
-- procedural terrain generation
-- real-time chunk streaming
-- stylized vegetation
-- animated alien character
-- live terrain minimap
-- backpack inventory system
-- procedural resource gathering
-- wood physics and item drops
-- cinematic exploration
-- modular rendering systems
+Core philosophy:
+- lightweight
+- procedural
+- atmospheric
+- modular
+- readable
+- stylized
+- no unnecessary ECS
 
 ---
 
-# Current Project Structure
+# Architecture
+
+```txt
+include/ = declarations
+src/     = implementations
+````
+
+Current structure:
 
 ```txt
 include/
 ├── game.hpp
+├── preload.hpp
 ├── world.hpp
 ├── world_types.hpp
 ├── terrain.hpp
@@ -39,6 +49,8 @@ include/
 
 src/
 ├── main.cpp
+├── game.cpp
+├── preload.cpp
 ├── world.cpp
 ├── terrain.cpp
 ├── vegetation.cpp
@@ -49,13 +61,13 @@ src/
 ├── map.cpp
 ├── inventory.cpp
 └── item_drops.cpp
-````
+```
 
 ---
 
-# Main Entry Point
+# Main Entry
 
-`src/main.cpp` is intentionally minimal:
+`main.cpp`
 
 ```cpp
 #include "game.hpp"
@@ -67,346 +79,188 @@ int main()
 }
 ```
 
-The main gameplay loop currently lives in:
+`game.hpp`
+
+```cpp
+#pragma once
+
+void RunGame();
+```
+
+Main gameplay loop:
+
+* `src/game.cpp`
+
+---
+
+# Systems
+
+## game.cpp
+
+Responsibilities:
+
+* main gameplay loop
+* player movement
+* camera update
+* render order
+* chunk streaming
+* gameplay state
+* pause menu
+* world update
+
+---
+
+## preload.cpp
+
+Responsibilities:
+
+* cinematic loading screen
+* loading progress
+* fullscreen preload rendering
+* glow UI
+* animated particles
+* debug replay system
+
+Debug key:
 
 ```txt
-include/game.hpp
+Q = replay preload
 ```
 
-inside:
+Main function:
 
 ```cpp
-RunGame()
+DrawLoadingScreen()
 ```
 
 ---
 
-# Core Architecture
-
-## `world.hpp`
-
-`world.hpp` is now only a central include file.
-
-It includes:
-
-* `world_types.hpp`
-* `terrain.hpp`
-* `vegetation.hpp`
-* `water.hpp`
-* `sky.hpp`
-* `alien.hpp`
-* `collisions.hpp`
-
-Avoid putting large implementations back into `world.hpp`.
-
----
-
-## `world_types.hpp`
-
-Contains shared world constants and structs:
-
-* `CHUNK_SIZE`
-* `CHUNK_RESOLUTION`
-* `VIEW_DISTANCE`
-* `WORLD_SCALE`
-* `GRASS_PER_CHUNK`
-* `FLOWERS_PER_CHUNK`
-* `WATER_LEVEL`
-* `ChunkKey`
-* `Tree`
-* `Rock`
-* `Flower`
-* `Chunk`
-
-Current `Tree` structure:
-
-```cpp
-struct Tree {
-    Vector3 position;
-    float size;
-    float sway;
-    int hitCount = 0;
-    float shakeTimer = 0.0f;
-};
-```
-
-Gameplay state:
-
-* `hitCount` = tree damage
-* `shakeTimer` = tree shake animation
-
----
-
-# Engine Systems
-
-## Terrain System
-
-Files:
-
-* `terrain.hpp`
-* `terrain.cpp`
+## terrain.cpp
 
 Responsibilities:
 
-* procedural terrain generation
+* terrain generation
 * fractal noise
 * ridge noise
-* terrain mesh generation
-* chunk generation
-* terrain color calculation
-* terrain normal recalculation
+* chunk mesh generation
+* terrain normals
+* terrain colors
 
-Important functions:
+Main functions:
 
 ```cpp
-HashNoise()
-SmoothNoise()
-FractalNoise()
-RidgeNoise()
-GetTerrainHeight()
-GetTerrainColor()
-RecalculateTerrainNormals()
 GenerateChunk()
+GetTerrainHeight()
 ```
-
-`GenerateChunk()` generates:
-
-* terrain mesh
-* grass mesh
-* flower mesh
-* trees
-* rocks
 
 ---
 
-## Vegetation System
-
-Files:
-
-* `vegetation.hpp`
-* `vegetation.cpp`
+## vegetation.cpp
 
 Responsibilities:
 
-* grass generation
+* grass mesh generation
 * flower generation
-* tree rendering
-* rock rendering
+* procedural trees
+* procedural rocks
+* vegetation rendering
 * tree shaking
-* vegetation draw distance
 
-Important functions:
+Main functions:
 
 ```cpp
 GenerateGrassMesh()
-GenerateFlowerMesh()
 DrawNature()
-DrawFlowerModels()
-```
-
-Grass is GPU-generated per chunk.
-
-Trees are procedurally rendered using raylib primitives.
-
-Tree shake uses:
-
-```cpp
-tree.shakeTimer
 ```
 
 ---
 
-## Water System
-
-Files:
-
-* `water.hpp`
-* `water.cpp`
+## water.cpp
 
 Responsibilities:
 
 * animated water shader
 * water rendering
 * wave movement
-* rendering around player
 
-Important function:
+Main function:
 
 ```cpp
 DrawWaterAroundPlayer()
 ```
 
-Important shader globals:
-
-```cpp
-waterVertexShader
-waterFragmentShader
-```
-
 ---
 
-## Sky System
-
-Files:
-
-* `sky.hpp`
-* `sky.cpp`
+## sky.cpp
 
 Responsibilities:
 
-* cloud rendering
-* atmospheric background
+* procedural clouds
+* atmosphere
 * cloud movement
-
-Important function:
-
-```cpp
-DrawClouds(float time, Vector3 playerPos)
-```
-
----
-
-## Alien System
-
-Files:
-
-* `alien.hpp`
-* `alien.cpp`
-
-Responsibilities:
-
-* procedural alien rendering
-* walking animation
-* sprinting animation
-* falling animation
-* antenna animation
-* backpack rendering
-* attack animation
 
 Main function:
 
 ```cpp
-void DrawCuteAlien(
-    Vector3 pos,
-    float yawDeg,
-    bool isMoving,
-    bool isSprinting,
-    float verticalVelocity,
-    bool grounded,
-    float time,
-    float attackTimer
-);
+DrawClouds()
 ```
 
 ---
 
-# Alien Features
+## alien.cpp
 
-## Reactive Antenna System
+Responsibilities:
 
-Alien antennas now use dynamic physics-like motion.
+* procedural alien rendering
+* walk animation
+* sprint animation
+* falling animation
+* backpack rendering
+* attack animation
+* antenna physics
 
-Current antenna behavior includes:
-
-* idle sway
-* movement bounce
-* sprint bending
-* falling whip animation
-* organic motion
-* speed-based bending
-
-Important variables:
+Main function:
 
 ```cpp
-speedBend
-antennaBounce
-sprintVibration
-fallingWhip
+DrawCuteAlien()
 ```
 
-Antennas react to:
+Alien features:
 
-* movement speed
-* sprinting
-* jumping
-* falling velocity
-* movement state
-
-Sprint causes antennas to bend backward heavily.
-
-Falling causes antennas to whip dynamically.
+* reactive antennas
+* cinematic backpack
+* procedural body
+* stylized movement
 
 ---
 
-## Backpack System
-
-Alien backpack was upgraded into a cinematic procedural adventure backpack.
-
-Features:
-
-* rounded backpack body
-* front pocket
-* top flap
-* straps
-* side pouches
-* buckle details
-
-Backpack rotates with alien using:
-
-```cpp
-rlPushMatrix()
-rlTranslatef()
-rlRotatef()
-```
-
----
-
-## Collision System
-
-Files:
-
-* `collisions.hpp`
-* `collisions.cpp`
+## collisions.cpp
 
 Responsibilities:
 
 * tree collision
 * rock collision
 * smart ground detection
-* nature collision
+* terrain-aware movement
 
-Important functions:
+Main functions:
 
 ```cpp
 CheckNatureCollision()
 GetSmartGroundY()
-GetRockTopYAtPoint()
 ```
 
 ---
 
-## Map System
-
-Files:
-
-* `map.hpp`
-* `map.cpp`
+## map.cpp
 
 Responsibilities:
 
-* live terrain minimap
-* terrain sampling
-* water visualization
-* hill/mountain visualization
+* minimap rendering
+* terrain visualization
 * player tracking
 
-Important function:
-
-```cpp
-DrawWorldMapOverlay()
-```
-
-Map toggle:
+Toggle:
 
 ```txt
 M
@@ -414,83 +268,40 @@ M
 
 ---
 
-## Inventory System
-
-Files:
-
-* `inventory.hpp`
-* `inventory.cpp`
+## inventory.cpp
 
 Responsibilities:
 
-* backpack overlay
-* inventory UI
-* slot movement
-* click item organization
-* displaying wood
+* backpack UI
+* item movement
+* slot rendering
+* item organization
 
-Current function:
-
-```cpp
-DrawInventoryOverlay(
-    bool visible,
-    int inventorySlots[10],
-    int& selectedSlot
-);
-```
-
-Inventory toggle:
+Toggle:
 
 ```txt
 E
 ```
 
-Current inventory state:
+Current model:
 
 ```cpp
-int inventorySlots[10] = {0};
-int selectedSlot = -1;
+int inventorySlots[10]
 ```
-
-Current item system:
-
-* `0` = empty
-* positive value = wood count
 
 ---
 
-## Item Drop System
-
-Files:
-
-* `item_drops.hpp`
-* `item_drops.cpp`
+## item_drops.cpp
 
 Responsibilities:
 
-* dropped wood entities
-* terrain-aware physics
-* gravity simulation
+* wood physics
+* magnetic pickup
 * bounce simulation
-* magnetic pickup animation
-* spinning pickup animation
 * inventory collection
+* spinning drops
 
-Current structure:
-
-```cpp
-struct WoodDrop {
-    Vector3 position;
-    Vector3 velocity;
-    float radius;
-    float life;
-    bool picked;
-    bool magnetized;
-    float magnetTimer;
-};
-```
-
-Important functions:
+Main functions:
 
 ```cpp
 SpawnWoodDrops()
@@ -500,271 +311,31 @@ DrawWoodDrops()
 
 ---
 
-# Wood Drop Features
-
-Implemented:
-
-* procedural wood chunks
-* terrain collision
-* gravity
-* bounce physics
-* spinning logs
-* magnetic pickup
-* inventory collection
-* pickup popup text
-
-Wood chunks are rendered as procedural logs using:
-
-```cpp
-DrawCylinder()
-DrawCylinderWires()
-```
-
-Pickup system:
-
-* wood becomes magnetized near player
-* wood flies toward alien
-* spin speed increases
-* item disappears into inventory
-
-Pickup popup:
-
-```txt
-+1 Wood
-```
-
----
-
-# Gameplay Systems
-
-## Player Movement
+# Gameplay
 
 Controls:
 
 ```txt
-W A S D      = move
-SHIFT        = sprint
-SPACE        = jump
-Double SPACE = fly mode
-CTRL         = descend
-Mouse        = camera
-ESC          = pause
-M            = map
-E            = inventory
-Left Mouse   = hit tree
-```
-
-Movement is disabled during:
-
-* pause menu
-* inventory
-
----
-
-## Tree Hitting / Wood Gathering
-
-Alien can hit trees using left mouse button.
-
-Logic:
-
-* nearest valid tree detection
-* hit range check
-* front-facing dot product check
-* hit counter
-* tree shake
-* attack animation
-
-Tree hit values:
-
-```cpp
-const float hitRange = 4.2f;
-const float minDot = 0.45f;
-```
-
-Tree break condition:
-
-```cpp
-tree.hitCount >= 3
-```
-
-Tree destruction now spawns:
-
-```cpp
-SpawnWoodDrops(woodDrops, tree.position, 3);
-```
-
-Tree destruction includes:
-
-* boom cloud effect
-* procedural wood chunks
-* terrain bounce physics
-* magnetic pickup system
-
----
-
-## Attack Animation
-
-State variables:
-
-```cpp
-float attackTimer = 0.0f;
-float boomTimer = 0.0f;
-Vector3 boomPos = {0, 0, 0};
-```
-
-Attack triggers:
-
-```cpp
-attackTimer = 0.22f;
-```
-
-Alien arm animation is handled in:
-
-```txt
-alien.cpp
+WASD        movement
+SHIFT       sprint
+SPACE       jump
+SPACE x2    fly mode
+CTRL        descend
+MOUSE       camera
+LMB         hit tree
+E           inventory
+M           minimap
+ESC         pause
+Q           preload replay
 ```
 
 ---
 
-## Boom Effect
-
-When tree breaks:
-
-```cpp
-boomPos = tree.position;
-boomPos.y += 1.6f;
-boomTimer = 0.45f;
-```
-
-Small cartoon smoke cloud is rendered before:
-
-```cpp
-EndMode3D()
-```
-
----
-
-# Rendering Order
-
-Current render order:
-
-1. clear background
-2. `BeginMode3D(camera)`
-3. clouds
-4. sun glow
-5. terrain
-6. grass
-7. water
-8. flowers
-9. nature objects
-10. wood drops
-11. alien
-12. boom effect
-13. `EndMode3D()`
-14. map overlay
-15. inventory overlay
-16. HUD
-17. pause menu
-
----
-
-# UI Systems
-
-## HUD
-
-HUD currently shows:
-
-* controls
-* chunk count
-* grass count
-* FPS
-* fly mode state
-
----
-
-## Pickup Popup
-
-When collecting wood:
-
-```txt
-+1 Wood
-```
-
-Popup appears above alien.
-
----
-
-## Pause Menu
-
-ESC toggles pause.
-
-When paused:
-
-* cursor enabled
-* overlay shown
-* exit button clickable
-
----
-
-## Inventory UI
-
-Features:
-
-* 10 slots
-* 5x2 layout
-* hover effect
-* selected slot highlight
-* click-to-move item system
-* wood display
-
----
-
-# Build System
-
-Uses:
-
-* CMake
-* C++17
-* raylib
-* macOS bundle support
-
-Current `CMakeLists.txt` includes:
-
-```cmake
-src/main.cpp
-src/world.cpp
-src/alien.cpp
-src/sky.cpp
-src/water.cpp
-src/terrain.cpp
-src/vegetation.cpp
-src/collisions.cpp
-src/map.cpp
-src/inventory.cpp
-src/item_drops.cpp
-```
-
-Build:
-
-```bash
-rm -rf build
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-```
-
-Run:
-
-```bash
-open build/EndlessMeadow.app
-```
-
----
-
-# Current Implemented Features
+# Current Features
 
 Implemented:
 
-* infinite procedural terrain
+* infinite terrain
 * chunk streaming
 * procedural grass
 * procedural flowers
@@ -773,181 +344,141 @@ Implemented:
 * animated water
 * procedural clouds
 * animated alien
-* reactive alien antennas
-* cinematic alien backpack
-* terrain minimap
-* 10-slot inventory
+* reactive antennas
+* cinematic backpack
+* minimap
+* inventory system
 * inventory organization
-* tree hitting
-* tree shaking
 * tree destruction
-* procedural wood drops
-* terrain-aware wood physics
-* magnetic pickup animation
-* spinning pickup animation
-* pickup popup text
-* boom cloud effect
-* fly mode
-* loading screen
-* pause menu
-* macOS app bundle
-
----
-
-# Current Architecture State
-
-Project is partially modular.
-
-Main systems are separated into `.hpp/.cpp` modules.
-
-Main gameplay loop still exists in:
-
-```txt
-include/game.hpp
-```
-
-Future improvement:
-
-```txt
-include/game.hpp -> declarations only
-src/game.cpp -> implementation
-```
-
----
-
-# Current Inventory Limitation
-
-Inventory still uses integer-only wood storage.
-
-Future better model:
-
-```cpp
-enum class ItemType {
-    None,
-    Wood,
-    Stone,
-    Flower,
-    Mushroom
-};
-
-struct InventorySlot {
-    ItemType type;
-    int count;
-};
-```
-
----
-
-# Current Tree System
-
-Trees currently support:
-
-* damage
-* shaking
-* destruction
-* procedural wood drops
-* terrain bounce physics
+* wood drops
+* bounce physics
 * magnetic pickup
-* inventory collection
+* popup text
+* fly mode
+* preload system
+* pause menu
+* cinematic UI
+* macOS bundle
 
-Trees are still stored directly inside chunk vectors:
+---
 
-```cpp
-std::vector<Tree> trees;
+# Render Order
+
+```txt
+sky
+sun
+terrain
+grass
+water
+flowers
+nature
+wood drops
+alien
+effects
+UI
+menus
 ```
 
 ---
 
-# Recommended Future Improvements
+# Current Technical State
 
-High-value next systems:
+Architecture is modular.
 
-1. Move `RunGame()` into `game.cpp`
-2. Create real `InventorySlot`
-3. Add pickup sound effects
-4. Add falling tree animation
-5. Add tree stump system
-6. Add axe/tool item
-7. Add crafting system
-8. Add hotbar
-9. Add day/night cycle
-10. Add dynamic weather
-11. Add biome system
-12. Add wildlife
-13. Add particle system
-14. Add save/load system
+Large gameplay loop moved from:
+
+```txt
+game.hpp
+```
+
+into:
+
+```txt
+game.cpp
+```
+
+Loading system separated into:
+
+```txt
+preload.cpp
+```
+
+Project is transitioning from:
+
+```txt
+prototype
+```
+
+toward:
+
+```txt
+mini-engine architecture
+```
 
 ---
 
-# AI Modification Rules
+# AI Rules
 
 When modifying project:
 
-* preserve modular architecture
-* avoid giant `world.hpp`
-* use separate `.hpp/.cpp` systems
+* preserve modular structure
+* avoid giant files
+* use separate .hpp/.cpp systems
 * preserve procedural style
 * preserve cinematic atmosphere
-* avoid unnecessary ECS conversion
-* keep systems lightweight
-* update `CMakeLists.txt` when adding files
+* avoid unnecessary complexity
+* avoid ECS unless truly needed
+* update CMakeLists.txt when adding files
 * keep code copy-paste ready
-* update both `.hpp` and `.cpp` when changing signatures
+* prefer readability over abstraction
 
 ---
 
-# Debugging Notes
-
-## Linker Errors
+# Important Notes
 
 If linker errors appear:
 
-* check `CMakeLists.txt`
-* verify new `.cpp` file is added
+* verify new `.cpp` exists in CMakeLists.txt
 
-## Signature Mismatch
-
-If function mismatch appears:
+If missing symbols appear:
 
 * verify `.hpp`
 * verify `.cpp`
-* verify call site
+* verify signatures
 
-## Missing Struct Fields
+If new gameplay systems become large:
 
-If missing member errors appear:
+* separate into dedicated module
 
-* update `world_types.hpp`
+Recommended future modules:
 
-## App Missing
-
-If macOS app missing:
-
-* build failed earlier
-* fix compile errors first
+```txt
+camera_controller.cpp
+ui.cpp
+menus.cpp
+chunk_manager.cpp
+combat.cpp
+audio.cpp
+particles.cpp
+weather.cpp
+```
 
 ---
 
-# Engine Philosophy
+# Long-Term Direction
 
-Endless Meadow should remain:
-
-* lightweight
-* procedural
-* cinematic
-* atmospheric
-* playful
-* stylized
-* modular
-* readable
-
-The project should feel like a mix of:
+Endless Meadow should feel like:
 
 * procedural art project
-* graphics playground
 * cozy survival prototype
-* mini-engine showcase
+* graphics playground
+* cinematic exploration sandbox
+* stylized indie mini-engine
 
-Long-term direction:
+Inspirations:
 
-A cinematic procedural survival sandbox with stylized graphics and modular engine architecture.
+* Journey
+* Sable
+* Tiny Glade
+* No Man's Sky (stylized side)
+* Firewatch atmosphere

@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/raylib-5.5-green">
   <img src="https://img.shields.io/badge/OpenGL-Renderer-orange">
   <img src="https://img.shields.io/badge/Procedural-Generation-brightgreen">
+  <img src="https://img.shields.io/badge/Architecture-Modular-success">
 </p>
 
 <p align="center">
@@ -26,25 +27,46 @@
 
 ---
 
+# Endless Meadow
+
+Endless Meadow is a cinematic procedural meadow sandbox and experimental mini-engine focused on procedural rendering, atmospheric visuals and modular gameplay systems.
+
+Built using:
+- C++17
+- raylib
+- OpenGL
+- GLSL
+- CMake
+
+The project combines:
+- procedural terrain generation
+- real-time chunk streaming
+- stylized rendering
+- cinematic exploration
+- lightweight engine architecture
+
+---
+
 # Features
 
 - 🌱 Infinite procedural terrain
-- 🌊 Animated water system
-- ☁️ Atmospheric clouds
+- 🌊 Animated water shader
+- ☁️ Atmospheric cloud rendering
 - 🌲 Procedural trees and rocks
-- 🌸 GPU flower rendering
-- 👾 Animated alien character
+- 🌸 GPU grass & flower rendering
+- 👾 Procedural animated alien
 - 🧠 Reactive alien antenna physics
 - 🎒 Cinematic procedural backpack
-- 🪵 Tree chopping & destruction
-- 📦 Wood drop physics system
-- ✨ Magnetic item pickup animation
-- 🗺️ Live terrain minimap
-- 🎮 Chunk streaming world
-- 🎒 Backpack inventory system
-- ✨ Pickup popup text
+- 🪵 Tree destruction system
+- 📦 Wood drop physics
+- ✨ Magnetic item pickup
+- 🗺️ Real-time terrain minimap
+- 🎮 Runtime chunk streaming
+- 🎒 Backpack inventory UI
+- ✨ Pickup popup effects
 - 🛫 Fly mode
-- 🎬 Cinematic exploration
+- 🎬 Cinematic preload system
+- 🧩 Modular `.hpp/.cpp` architecture
 
 ---
 
@@ -62,6 +84,7 @@
 | M | Map |
 | Left Click | Hit Tree |
 | ESC | Pause |
+| Q | Replay Preload |
 
 ---
 
@@ -70,6 +93,7 @@
 ```txt
 include/
 ├── game.hpp
+├── preload.hpp
 ├── world.hpp
 ├── world_types.hpp
 ├── terrain.hpp
@@ -84,6 +108,8 @@ include/
 
 src/
 ├── main.cpp
+├── game.cpp
+├── preload.cpp
 ├── world.cpp
 ├── terrain.cpp
 ├── vegetation.cpp
@@ -98,6 +124,54 @@ src/
 
 ---
 
+# Current Systems
+
+## Terrain System
+- Infinite procedural terrain
+- Fractal & ridge noise generation
+- Runtime chunk generation
+- Terrain-aware rendering
+
+## Vegetation System
+- GPU grass rendering
+- Flower rendering
+- Procedural trees
+- Procedural rocks
+- Tree shaking animation
+
+## Water System
+- Animated GLSL water shader
+- Dynamic wave movement
+- Water rendering around player
+
+## Alien System
+- Procedural alien rendering
+- Walking & sprint animation
+- Falling animation
+- Reactive antenna physics
+- Cinematic backpack rendering
+
+## Inventory System
+- Backpack UI
+- Item organization
+- Slot movement system
+- Wood collection
+
+## Item Drop System
+- Terrain-aware physics
+- Bounce simulation
+- Magnetic pickup system
+- Spinning collectible items
+
+## Preload System
+- Cinematic loading screen
+- Glow UI
+- Animated particles
+- Smooth progress bar
+- Replayable debug preload
+
+---
+
 # Build
 
 ## macOS
@@ -108,7 +182,7 @@ Install dependencies:
 brew install raylib cmake
 ```
 
-Clone project:
+Clone repository:
 
 ```bash
 git clone https://github.com/Armin-000/EndlessMeadow.git
@@ -116,7 +190,7 @@ git clone https://github.com/Armin-000/EndlessMeadow.git
 cd EndlessMeadow
 ```
 
-Build:
+Build project:
 
 ```bash
 rm -rf build
@@ -137,7 +211,7 @@ open build/EndlessMeadow.app
 # Technologies
 
 - C++17
-- raylib
+- raylib 5.5
 - OpenGL
 - GLSL
 - CMake
@@ -145,56 +219,71 @@ open build/EndlessMeadow.app
 
 ---
 
-# Current Systems
+# Architecture
 
-- Infinite procedural terrain
-- Runtime chunk streaming
-- GPU grass rendering
-- Procedural flower rendering
-- Animated water shader
-- Atmospheric cloud rendering
-- Procedural tree & rock generation
-- Alien animation system
-- Reactive antenna physics
-- Cinematic backpack rendering
-- Tree collision system
-- Tree destruction system
-- Procedural wood drop physics
-- Terrain-aware bouncing logs
-- Magnetic pickup animation
-- Inventory UI system
-- Real-time terrain minimap
-- Fly mode
-- Pause menu
-- Loading screen
+Current architecture follows a modular design:
+
+```txt
+include/ -> declarations
+src/     -> implementations
+```
+
+Main gameplay loop:
+```txt
+src/game.cpp
+```
+
+Loading system:
+```txt
+src/preload.cpp
+```
+
+The project is transitioning from:
+```txt
+prototype
+```
+
+toward:
+```txt
+modular procedural mini-engine
+```
 
 ---
 
 # Future Plans
 
-- Pickup sound effects
-- Falling tree animation
-- Tree stump system
-- Crafting system
-- Hotbar
-- Day/night cycle
-- Dynamic weather
-- Wildlife
-- Biomes
-- Better inventory system
-- Survival mechanics
-- Save/load system
+- 🌙 Day/night cycle
+- 🌧️ Dynamic weather
+- 🌲 Biome system
+- 🔊 Ambient audio
+- 🪓 Axe/tool system
+- 🧱 Crafting
+- 🎒 Better inventory model
+- 🌿 Wildlife
+- 💾 Save/load system
+- ✨ Particle engine
+- 🎥 Cinematic camera system
+- ⚡ Async chunk loading
+
+---
+
+# Inspirations
+
+- Journey
+- Sable
+- Tiny Glade
+- Firewatch
+- No Man's Sky (stylized atmosphere)
 
 ---
 
 # License
 
 This project is intended for:
-
-- learning
-- experimentation
 - graphics programming
 - procedural rendering research
+- experimentation
+- learning
 - portfolio showcase
 
 See `LICENSE.md`.

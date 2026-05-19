@@ -12,6 +12,7 @@ add_executable(EndlessMeadow
     MACOSX_BUNDLE
 
     src/main.cpp
+    src/game.cpp
     src/world.cpp
     src/alien.cpp
     src/sky.cpp
