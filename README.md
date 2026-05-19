@@ -6,7 +6,7 @@
 <h1 align="center">Endless Meadow 🌿</h1>
 
 <p align="center">
-  A cinematic procedural meadow prototype and experimental mini-engine built in modern C++.
+  A cinematic procedural meadow prototype and experimental mini-engine built in modern C++ using raylib and OpenGL.
 </p>
 
 <p align="center">
@@ -34,12 +34,17 @@
 - 🌲 Procedural trees and rocks
 - 🌸 GPU flower rendering
 - 👾 Animated alien character
-- 🎒 Backpack inventory system
-- 🪵 Tree chopping & wood gathering
+- 🧠 Reactive alien antenna physics
+- 🎒 Cinematic procedural backpack
+- 🪵 Tree chopping & destruction
+- 📦 Wood drop physics system
+- ✨ Magnetic item pickup animation
 - 🗺️ Live terrain minimap
-- ✨ Chunk streaming world
+- 🎮 Chunk streaming world
+- 🎒 Backpack inventory system
+- ✨ Pickup popup text
 - 🛫 Fly mode
-- 🎮 Cinematic exploration
+- 🎬 Cinematic exploration
 
 ---
 
@@ -74,7 +79,8 @@ include/
 ├── alien.hpp
 ├── collisions.hpp
 ├── map.hpp
-└── inventory.hpp
+├── inventory.hpp
+└── item_drops.hpp
 
 src/
 ├── main.cpp
@@ -86,7 +92,8 @@ src/
 ├── alien.cpp
 ├── collisions.cpp
 ├── map.cpp
-└── inventory.cpp
+├── inventory.cpp
+└── item_drops.cpp
 ```
 
 ---
@@ -140,29 +147,43 @@ open build/EndlessMeadow.app
 
 # Current Systems
 
-- Procedural terrain generation
+- Infinite procedural terrain
 - Runtime chunk streaming
-- Grass & flower mesh generation
+- GPU grass rendering
+- Procedural flower rendering
 - Animated water shader
-- Atmospheric sky rendering
+- Atmospheric cloud rendering
+- Procedural tree & rock generation
 - Alien animation system
+- Reactive antenna physics
+- Cinematic backpack rendering
 - Tree collision system
 - Tree destruction system
+- Procedural wood drop physics
+- Terrain-aware bouncing logs
+- Magnetic pickup animation
 - Inventory UI system
-- Real-time terrain map
+- Real-time terrain minimap
+- Fly mode
+- Pause menu
+- Loading screen
 
 ---
 
 # Future Plans
 
+- Pickup sound effects
+- Falling tree animation
+- Tree stump system
 - Crafting system
+- Hotbar
 - Day/night cycle
 - Dynamic weather
 - Wildlife
-- Sound effects
 - Biomes
 - Better inventory system
 - Survival mechanics
+- Save/load system
 
 ---
 
@@ -173,6 +194,7 @@ This project is intended for:
 - learning
 - experimentation
 - graphics programming
+- procedural rendering research
 - portfolio showcase
 
 See `LICENSE.md`.

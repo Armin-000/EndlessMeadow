@@ -3,6 +3,7 @@
 #include "world.hpp"
 #include "map.hpp"
 #include "inventory.hpp"
+#include "item_drops.hpp"
 
 #include "raylib.h"
 #include "raymath.h"
@@ -158,6 +159,8 @@ inline void RunGame() {
     float attackTimer = 0.0f;
     float boomTimer = 0.0f;
     Vector3 boomPos = {0, 0, 0};
+    std::vector<WoodDrop> woodDrops;
+    float woodPopupTimer = 0.0f;
 
     bool flyMode = false;
     float lastSpacePressTime = -10.0f;
@@ -353,6 +356,7 @@ inline void RunGame() {
 
         if (attackTimer > 0.0f) attackTimer -= dt;
         if (boomTimer > 0.0f) boomTimer -= dt;
+        if (woodPopupTimer > 0.0f) woodPopupTimer -= dt;
 
         for (auto& item : chunks) {
             for (Tree& tree : item.second.trees) {
@@ -504,23 +508,11 @@ inline void RunGame() {
                     boomPos.y += 1.6f;
                     boomTimer = 0.45f;
 
+                    SpawnWoodDrops(woodDrops, tree.position, 3);
+
                     targetChunk->trees.erase(
                         targetChunk->trees.begin() + targetTreeIndex
                     );
-
-                    bool addedWood = false;
-
-                    for (int i = 0; i < 10; i++) {
-                        if (inventorySlots[i] > 0) {
-                            inventorySlots[i] += 3;
-                            addedWood = true;
-                            break;
-                        }
-                    }
-
-                    if (!addedWood) {
-                        inventorySlots[0] = 3;
-                    }
                 }
             }
         }
@@ -582,6 +574,27 @@ inline void RunGame() {
             } else {
                 grounded = false;
             }
+        }
+
+        int woodBefore = 0;
+        for (int i = 0; i < 10; i++) {
+            woodBefore += inventorySlots[i];
+        }
+
+        UpdateWoodDrops(
+            woodDrops,
+            playerPos,
+            dt,
+            inventorySlots
+        );
+
+        int woodAfter = 0;
+        for (int i = 0; i < 10; i++) {
+            woodAfter += inventorySlots[i];
+        }
+
+        if (woodAfter > woodBefore) {
+            woodPopupTimer = 0.9f;
         }
 
         chunkWorldSize = CHUNK_SIZE * WORLD_SCALE;
@@ -681,6 +694,9 @@ inline void RunGame() {
         DrawFlowerModels(chunks, playerPos);
 
         DrawNature(chunks, playerPos, time);
+
+        DrawWoodDrops(woodDrops);
+
         bool isSprinting = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
 
             DrawCuteAlien(
@@ -716,6 +732,23 @@ inline void RunGame() {
         EndMode3D();
         DrawWorldMapOverlay(chunks, playerPos, showMap);
         DrawInventoryOverlay(showInventory, inventorySlots, selectedSlot);
+
+        if (woodPopupTimer > 0.0f) {
+            float p = woodPopupTimer / 0.9f;
+
+            Vector2 screenPos = GetWorldToScreen(
+                {playerPos.x, playerPos.y + 2.4f + (1.0f - p) * 0.6f, playerPos.z},
+                camera
+            );
+
+            DrawText(
+                "+1 Wood",
+                screenPos.x - MeasureText("+1 Wood", 24) / 2,
+                screenPos.y,
+                24,
+                Fade(Color{255, 220, 120, 255}, p)
+            );
+        }
 
         DrawRectangle(16, 16, 520, 220, Fade(BLACK, 0.48f));
         DrawText("Endless Meadow - GPU Grass Prototype", 28, 28, 20, WHITE);

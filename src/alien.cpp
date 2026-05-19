@@ -61,17 +61,19 @@ void DrawCuteAlien(
     DrawSphere(body, 0.42f, bodyColor);
     DrawSphere(head, 0.56f, headColor);
 
-    // Cute brown backpack - fixed and rotated with alien
+    // Realistic adventure backpack - fixed and rotated with alien
     Vector3 backpackCenter = Vector3Subtract(
         body,
-        Vector3Scale(forward, 0.38f)
+        Vector3Scale(forward, 0.40f)
     );
 
     backpackCenter.y += 0.02f;
 
-    Color backpackColor = Color{120, 72, 38, 255};
-    Color backpackDark = Color{78, 45, 25, 255};
-    Color backpackLight = Color{165, 105, 60, 255};
+    Color backpackMain = Color{105, 63, 34, 255};
+    Color backpackDark = Color{55, 32, 18, 255};
+    Color backpackLight = Color{155, 98, 52, 255};
+    Color strapColor = Color{35, 24, 18, 255};
+    Color buckleColor = Color{215, 165, 85, 255};
 
     rlPushMatrix();
 
@@ -81,53 +83,128 @@ void DrawCuteAlien(
         // Main backpack body
         DrawCube(
             {0.0f, 0.0f, 0.0f},
-            0.46f,
-            0.58f,
+            0.50f,
+            0.64f,
             0.24f,
-            backpackColor
+            backpackMain
         );
 
+        // Rounded corner illusion
+        DrawSphere({-0.23f,  0.28f, -0.02f}, 0.075f, backpackLight);
+        DrawSphere({ 0.23f,  0.28f, -0.02f}, 0.075f, backpackLight);
+        DrawSphere({-0.23f, -0.28f, -0.02f}, 0.065f, backpackDark);
+        DrawSphere({ 0.23f, -0.28f, -0.02f}, 0.065f, backpackDark);
+
+        // Dark outline
         DrawCubeWires(
             {0.0f, 0.0f, 0.0f},
-            0.47f,
-            0.59f,
+            0.51f,
+            0.65f,
             0.25f,
             backpackDark
         );
 
-        // Outside pocket
+        // Top flap
         DrawCube(
-            {0.0f, -0.08f, -0.145f},
-            0.30f,
-            0.22f,
-            0.045f,
+            {0.0f, 0.25f, -0.135f},
+            0.56f,
+            0.16f,
+            0.06f,
+            backpackDark
+        );
+
+        DrawCube(
+            {0.0f, 0.18f, -0.17f},
+            0.44f,
+            0.07f,
+            0.04f,
             backpackLight
         );
 
-        // Top flap
+        // Front pocket
         DrawCube(
-            {0.0f, 0.18f, -0.15f},
+            {0.0f, -0.10f, -0.155f},
             0.34f,
-            0.12f,
+            0.30f,
+            0.06f,
+            backpackLight
+        );
+
+        // Pocket flap
+        DrawCube(
+            {0.0f, 0.08f, -0.19f},
+            0.38f,
+            0.08f,
+            0.045f,
+            backpackDark
+        );
+
+        // Pocket buckle
+        DrawCube(
+            {0.0f, 0.055f, -0.225f},
+            0.095f,
+            0.075f,
+            0.025f,
+            buckleColor
+        );
+
+        // Side seams
+        DrawCube(
+            {-0.275f, 0.0f, -0.13f},
+            0.035f,
+            0.52f,
+            0.045f,
+            backpackDark
+        );
+
+        DrawCube(
+            {0.275f, 0.0f, -0.13f},
+            0.035f,
+            0.52f,
+            0.045f,
+            backpackDark
+        );
+
+        // Shoulder straps near alien body
+        DrawCube(
+            {-0.18f, 0.02f, 0.15f},
+            0.055f,
+            0.58f,
             0.05f,
+            strapColor
+        );
+
+        DrawCube(
+            {0.18f, 0.02f, 0.15f},
+            0.055f,
+            0.58f,
+            0.05f,
+            strapColor
+        );
+
+        // Bottom strap
+        DrawCube(
+            {0.0f, -0.30f, 0.13f},
+            0.38f,
+            0.055f,
+            0.045f,
+            strapColor
+        );
+
+        // Small side pouches
+        DrawCube(
+            {-0.32f, -0.07f, -0.02f},
+            0.09f,
+            0.22f,
+            0.13f,
             backpackDark
         );
 
-        // Left strap
         DrawCube(
-            {-0.17f, 0.02f, 0.145f},
-            0.045f,
-            0.50f,
-            0.045f,
-            backpackDark
-        );
-
-        // Right strap
-        DrawCube(
-            {0.17f, 0.02f, 0.145f},
-            0.045f,
-            0.50f,
-            0.045f,
+            {0.32f, -0.07f, -0.02f},
+            0.09f,
+            0.22f,
+            0.13f,
             backpackDark
         );
 
@@ -159,14 +236,75 @@ void DrawCuteAlien(
     Vector3 antRBase = Vector3Add(head, Vector3Scale(right, 0.22f));
     antRBase.y += 0.36f;
 
+    float speedBend = 0.0f;
+
+    if (isMoving) {
+        speedBend = isSprinting ? 0.78f : 0.28f;
+    }
+
+    if (falling) {
+        speedBend = -0.08f;
+    }
+
+    float antennaSway =
+        sinf(time * 4.0f) * 0.035f;
+
+    float antennaBounce =
+        isMoving
+            ? sinf(time * runSpeed * 0.65f) * 0.035f
+            : 0.0f;
+
+    float sprintVibration =
+        isSprinting
+            ? sinf(time * 22.0f) * 0.018f
+            : 0.0f;
+
+            float fallingWhip = 0.0f;
+
+    if (falling) {
+        float fallStrength =
+            Clamp(fabsf(verticalVelocity) / 18.0f, 0.0f, 1.0f);
+
+        fallingWhip =
+            sinf(time * 26.0f) *
+            0.16f *
+            fallStrength;
+    }
+
+    Vector3 bendBack =
+        Vector3Scale(
+            forward,
+            -speedBend + fallingWhip
+        );
+
     Vector3 antLTop = Vector3Add(
         antLBase,
-        Vector3Add(Vector3Scale(right, -0.10f), {0, 0.42f, 0})
+        Vector3Add(
+            Vector3Add(
+                Vector3Scale(right, -0.12f + antennaSway),
+                bendBack
+            ),
+            {
+                0.0f,
+                0.44f + antennaBounce + sprintVibration,
+                0.0f
+            }
+        )
     );
 
     Vector3 antRTop = Vector3Add(
         antRBase,
-        Vector3Add(Vector3Scale(right, 0.10f), {0, 0.42f, 0})
+        Vector3Add(
+            Vector3Add(
+                Vector3Scale(right, 0.12f - antennaSway),
+                bendBack
+            ),
+            {
+                0.0f,
+                0.44f - antennaBounce - sprintVibration,
+                0.0f
+            }
+        )
     );
 
     DrawLine3D(antLBase, antLTop, darkDetail);
