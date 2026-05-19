@@ -22,6 +22,7 @@ add_executable(EndlessMeadow
     src/map.cpp
     src/inventory.cpp
     src/item_drops.cpp
+    src/preload.cpp
 
     assets/icons/meadow.icns
 )
